@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import type { ImageToDotsResult } from "@/lib/image-to-dots";
 
 const STIFFNESS = 0.06;
@@ -31,13 +31,18 @@ interface DotState {
   ts: number;
   // Cascade: timestamp after which this dot starts morphing
   morphAt: number;
+  // True if this dot sits inside the text exclusion zone — always kept invisible
+  excluded: boolean;
 }
 
 interface DotCanvasProps {
   className?: string;
+  textRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export default function DotCanvas({ className }: DotCanvasProps) {
+const TEXT_EXCLUSION_PADDING = 28; // px around the text block to keep clear
+
+export default function DotCanvas({ className, textRef }: DotCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -64,10 +69,45 @@ export default function DotCanvas({ className }: DotCanvasProps) {
       const offsetX = (canvasW - data.canvasWidth * scale) / 2;
       const offsetY = (canvasH - data.canvasHeight * scale) / 2;
 
+      // Compute text exclusion zone in canvas-local coordinates
+      let exLeft = Infinity, exTop = Infinity, exRight = -Infinity, exBottom = -Infinity;
+      if (textRef?.current && canvas) {
+        const canvasRect = canvas.getBoundingClientRect();
+        const textRect = textRef.current.getBoundingClientRect();
+        // The text block uses `inset-0 justify-end` so it spans the full width —
+        // find the tight bounding box of actual text content (the last ~3 children)
+        const children = Array.from(textRef.current.children) as HTMLElement[];
+        if (children.length > 0) {
+          let cLeft = Infinity, cTop = Infinity, cRight = -Infinity, cBottom = -Infinity;
+          for (const child of children) {
+            const r = child.getBoundingClientRect();
+            cLeft   = Math.min(cLeft,   r.left);
+            cTop    = Math.min(cTop,    r.top);
+            cRight  = Math.max(cRight,  r.right);
+            cBottom = Math.max(cBottom, r.bottom);
+          }
+          const pad = TEXT_EXCLUSION_PADDING;
+          exLeft   = cLeft   - canvasRect.left - pad;
+          exTop    = cTop    - canvasRect.top  - pad;
+          exRight  = cRight  - canvasRect.left + pad;
+          exBottom = cBottom - canvasRect.top  + pad;
+        } else {
+          // Fallback: use the full textRef rect width but only the bottom portion
+          const pad = TEXT_EXCLUSION_PADDING;
+          exLeft   = textRect.left  - canvasRect.left - pad;
+          exTop    = textRect.top   - canvasRect.top  - pad;
+          exRight  = textRect.right - canvasRect.left + pad;
+          exBottom = textRect.bottom - canvasRect.top + pad;
+        }
+      }
+
+      const hasExclusion = exRight > exLeft && exBottom > exTop;
+
       dots = data.dots.map((d) => {
         const hx = d.x * data.canvasWidth * scale + offsetX;
         const hy = d.y * data.canvasHeight * scale + offsetY;
-        const sz = d.size * scale;
+        const excluded = hasExclusion && hx >= exLeft && hx <= exRight && hy >= exTop && hy <= exBottom;
+        const sz = excluded ? 0 : d.size * scale;
         return {
           homeX: hx, homeY: hy,
           x: hx, y: hy,
@@ -75,6 +115,7 @@ export default function DotCanvas({ className }: DotCanvasProps) {
           r: d.r, g: d.g, b: d.b, size: sz,
           tr: d.r, tg: d.g, tb: d.b, ts: sz,
           morphAt: 0,
+          excluded,
         };
       });
     }
@@ -84,6 +125,7 @@ export default function DotCanvas({ className }: DotCanvasProps) {
       const now = performance.now();
       const n = Math.min(dots.length, data.dots.length);
       for (let i = 0; i < n; i++) {
+        if (dots[i].excluded) continue;
         const d = data.dots[i];
         dots[i].tr = d.r;
         dots[i].tg = d.g;
@@ -149,6 +191,7 @@ export default function DotCanvas({ className }: DotCanvasProps) {
         dot.x += dot.vx;
         dot.y += dot.vy;
 
+        if (dot.excluded) continue;
         const radius = Math.max(dot.size, 0.3);
         if (radius < 0.1) continue;
 
