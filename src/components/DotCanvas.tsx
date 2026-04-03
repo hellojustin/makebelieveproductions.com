@@ -40,7 +40,9 @@ interface DotCanvasProps {
   textRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const TEXT_EXCLUSION_PADDING = 28; // px around the text block to keep clear
+const TEXT_EXCLUSION_PADDING_SIDE = 72; // px on left and right of text block
+const TEXT_EXCLUSION_PADDING_TOP  = 64; // px above text block
+const TEXT_EXCLUSION_PADDING_BTM  = 28; // px below text block
 
 export default function DotCanvas({ className, textRef }: DotCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -86,27 +88,56 @@ export default function DotCanvas({ className, textRef }: DotCanvasProps) {
             cRight  = Math.max(cRight,  r.right);
             cBottom = Math.max(cBottom, r.bottom);
           }
-          const pad = TEXT_EXCLUSION_PADDING;
-          exLeft   = cLeft   - canvasRect.left - pad;
-          exTop    = cTop    - canvasRect.top  - pad;
-          exRight  = cRight  - canvasRect.left + pad;
-          exBottom = cBottom - canvasRect.top  + pad;
+          exLeft   = cLeft   - canvasRect.left - TEXT_EXCLUSION_PADDING_SIDE;
+          exTop    = cTop    - canvasRect.top  - TEXT_EXCLUSION_PADDING_TOP;
+          exRight  = cRight  - canvasRect.left + TEXT_EXCLUSION_PADDING_SIDE;
+          exBottom = cBottom - canvasRect.top  + TEXT_EXCLUSION_PADDING_BTM;
         } else {
           // Fallback: use the full textRef rect width but only the bottom portion
-          const pad = TEXT_EXCLUSION_PADDING;
-          exLeft   = textRect.left  - canvasRect.left - pad;
-          exTop    = textRect.top   - canvasRect.top  - pad;
-          exRight  = textRect.right - canvasRect.left + pad;
-          exBottom = textRect.bottom - canvasRect.top + pad;
+          exLeft   = textRect.left   - canvasRect.left - TEXT_EXCLUSION_PADDING_SIDE;
+          exTop    = textRect.top    - canvasRect.top  - TEXT_EXCLUSION_PADDING_TOP;
+          exRight  = textRect.right  - canvasRect.left + TEXT_EXCLUSION_PADDING_SIDE;
+          exBottom = textRect.bottom - canvasRect.top  + TEXT_EXCLUSION_PADDING_BTM;
         }
       }
 
       const hasExclusion = exRight > exLeft && exBottom > exTop;
 
+      // Rounded-rect SDF: negative value = inside, magnitude = depth
+      const exCx = (exLeft + exRight) / 2;
+      const exCy = (exTop + exBottom) / 2;
+      const exHw = (exRight - exLeft) / 2;
+      const exHh = (exBottom - exTop) / 2;
+      // Large border-radius — clamp to the smaller half-dimension so it stays an oval
+      const exR = Math.min(exHw, exHh) * 0.35;
+      // Normaliser: depth as fraction of the shorter half-dimension
+      const exScale = Math.min(exHw, exHh);
+
       dots = data.dots.map((d) => {
         const hx = d.x * data.canvasWidth * scale + offsetX;
         const hy = d.y * data.canvasHeight * scale + offsetY;
-        const excluded = hasExclusion && hx >= exLeft && hx <= exRight && hy >= exTop && hy <= exBottom;
+
+        let excluded = false;
+        if (hasExclusion) {
+          const qx = Math.abs(hx - exCx) - exHw + exR;
+          const qy = Math.abs(hy - exCy) - exHh + exR;
+          const sdf = Math.min(Math.max(qx, qy), 0)
+                    + Math.sqrt(Math.max(qx, 0) ** 2 + Math.max(qy, 0) ** 2)
+                    - exR;
+          if (sdf < 0) {
+            const depth = -sdf / exScale; // 0 at boundary → larger deeper in
+            let keepProb: number;
+            if (depth < 0.1) {
+              keepProb = 1 - (0.7 * depth / 0.1);       // 1.0 → 0.30
+            } else if (depth < 0.3) {
+              keepProb = 0.3 - (0.25 * (depth - 0.1) / 0.2); // 0.30 → 0.05
+            } else {
+              keepProb = 0.05;
+            }
+            excluded = Math.random() > keepProb;
+          }
+        }
+
         const sz = excluded ? 0 : d.size * scale;
         return {
           homeX: hx, homeY: hy,
