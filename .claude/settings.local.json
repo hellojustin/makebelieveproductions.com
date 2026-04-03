@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__plugin_figma_figma__create_new_file",
+      "mcp__plugin_figma_figma__use_figma",
+      "mcp__plugin_figma_figma__search_design_system",
+      "mcp__plugin_figma_figma__get_screenshot",
+      "Bash(npx:*)",
+      "Bash(rsync -av --exclude='.git' --exclude='node_modules' --exclude='.next' --exclude='CLAUDE.md' --exclude='AGENTS.md' . /Users/justin/src/claude-homepage/)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}
