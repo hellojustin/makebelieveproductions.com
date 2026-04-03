@@ -18,7 +18,7 @@ const services = [
 
 export default function ServicesSection() {
   return (
-    <section className="bg-[#08051a] w-full py-32 px-8 min-h-screen">
+    <section className="relative z-10 bg-[#08051a] w-full py-32 px-8 min-h-[150vh]">
       <div className="max-w-6xl mx-auto">
         <p className="text-xs tracking-[0.3em] text-violet-400/60 uppercase mb-16">
           What we do

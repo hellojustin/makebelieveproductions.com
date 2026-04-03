@@ -12,6 +12,10 @@ const CYCLE_INTERVAL = 5000;   // ms between image transitions
 const CASCADE_DURATION = 1500; // ms over which dots stagger their transition start
 const MORPH_SPEED = 0.12;      // exponential approach per frame — ~99% done in 0.5s
 
+const TEXT_EXCLUSION_PADDING_SIDE = 72; // px on left and right of text block
+const TEXT_EXCLUSION_PADDING_TOP  = 64; // px above text block
+const TEXT_EXCLUSION_PADDING_BTM  = 64; // px below text block
+
 interface DotState {
   homeX: number;
   homeY: number;
@@ -31,20 +35,17 @@ interface DotState {
   ts: number;
   // Cascade: timestamp after which this dot starts morphing
   morphAt: number;
-  // True if this dot sits inside the text exclusion zone — always kept invisible
-  excluded: boolean;
+  // Stable random roll [0,1] used for per-frame probabilistic exclusion
+  roll: number;
 }
 
 interface DotCanvasProps {
   className?: string;
+  style?: React.CSSProperties;
   textRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const TEXT_EXCLUSION_PADDING_SIDE = 72; // px on left and right of text block
-const TEXT_EXCLUSION_PADDING_TOP  = 64; // px above text block
-const TEXT_EXCLUSION_PADDING_BTM  = 28; // px below text block
-
-export default function DotCanvas({ className, textRef }: DotCanvasProps) {
+export default function DotCanvas({ className, style, textRef }: DotCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -71,74 +72,10 @@ export default function DotCanvas({ className, textRef }: DotCanvasProps) {
       const offsetX = (canvasW - data.canvasWidth * scale) / 2;
       const offsetY = (canvasH - data.canvasHeight * scale) / 2;
 
-      // Compute text exclusion zone in canvas-local coordinates
-      let exLeft = Infinity, exTop = Infinity, exRight = -Infinity, exBottom = -Infinity;
-      if (textRef?.current && canvas) {
-        const canvasRect = canvas.getBoundingClientRect();
-        const textRect = textRef.current.getBoundingClientRect();
-        // The text block uses `inset-0 justify-end` so it spans the full width —
-        // find the tight bounding box of actual text content (the last ~3 children)
-        const children = Array.from(textRef.current.children) as HTMLElement[];
-        if (children.length > 0) {
-          let cLeft = Infinity, cTop = Infinity, cRight = -Infinity, cBottom = -Infinity;
-          for (const child of children) {
-            const r = child.getBoundingClientRect();
-            cLeft   = Math.min(cLeft,   r.left);
-            cTop    = Math.min(cTop,    r.top);
-            cRight  = Math.max(cRight,  r.right);
-            cBottom = Math.max(cBottom, r.bottom);
-          }
-          exLeft   = cLeft   - canvasRect.left - TEXT_EXCLUSION_PADDING_SIDE;
-          exTop    = cTop    - canvasRect.top  - TEXT_EXCLUSION_PADDING_TOP;
-          exRight  = cRight  - canvasRect.left + TEXT_EXCLUSION_PADDING_SIDE;
-          exBottom = cBottom - canvasRect.top  + TEXT_EXCLUSION_PADDING_BTM;
-        } else {
-          // Fallback: use the full textRef rect width but only the bottom portion
-          exLeft   = textRect.left   - canvasRect.left - TEXT_EXCLUSION_PADDING_SIDE;
-          exTop    = textRect.top    - canvasRect.top  - TEXT_EXCLUSION_PADDING_TOP;
-          exRight  = textRect.right  - canvasRect.left + TEXT_EXCLUSION_PADDING_SIDE;
-          exBottom = textRect.bottom - canvasRect.top  + TEXT_EXCLUSION_PADDING_BTM;
-        }
-      }
-
-      const hasExclusion = exRight > exLeft && exBottom > exTop;
-
-      // Rounded-rect SDF: negative value = inside, magnitude = depth
-      const exCx = (exLeft + exRight) / 2;
-      const exCy = (exTop + exBottom) / 2;
-      const exHw = (exRight - exLeft) / 2;
-      const exHh = (exBottom - exTop) / 2;
-      // Large border-radius — clamp to the smaller half-dimension so it stays an oval
-      const exR = Math.min(exHw, exHh) * 0.35;
-      // Normaliser: depth as fraction of the shorter half-dimension
-      const exScale = Math.min(exHw, exHh);
-
       dots = data.dots.map((d) => {
         const hx = d.x * data.canvasWidth * scale + offsetX;
         const hy = d.y * data.canvasHeight * scale + offsetY;
-
-        let excluded = false;
-        if (hasExclusion) {
-          const qx = Math.abs(hx - exCx) - exHw + exR;
-          const qy = Math.abs(hy - exCy) - exHh + exR;
-          const sdf = Math.min(Math.max(qx, qy), 0)
-                    + Math.sqrt(Math.max(qx, 0) ** 2 + Math.max(qy, 0) ** 2)
-                    - exR;
-          if (sdf < 0) {
-            const depth = -sdf / exScale; // 0 at boundary → larger deeper in
-            let keepProb: number;
-            if (depth < 0.1) {
-              keepProb = 1 - (0.7 * depth / 0.1);       // 1.0 → 0.30
-            } else if (depth < 0.3) {
-              keepProb = 0.3 - (0.25 * (depth - 0.1) / 0.2); // 0.30 → 0.05
-            } else {
-              keepProb = 0.05;
-            }
-            excluded = Math.random() > keepProb;
-          }
-        }
-
-        const sz = excluded ? 0 : d.size * scale;
+        const sz = d.size * scale;
         return {
           homeX: hx, homeY: hy,
           x: hx, y: hy,
@@ -146,7 +83,7 @@ export default function DotCanvas({ className, textRef }: DotCanvasProps) {
           r: d.r, g: d.g, b: d.b, size: sz,
           tr: d.r, tg: d.g, tb: d.b, ts: sz,
           morphAt: 0,
-          excluded,
+          roll: Math.random(),
         };
       });
     }
@@ -156,7 +93,6 @@ export default function DotCanvas({ className, textRef }: DotCanvasProps) {
       const now = performance.now();
       const n = Math.min(dots.length, data.dots.length);
       for (let i = 0; i < n; i++) {
-        if (dots[i].excluded) continue;
         const d = data.dots[i];
         dots[i].tr = d.r;
         dots[i].tg = d.g;
@@ -196,6 +132,37 @@ export default function DotCanvas({ className, textRef }: DotCanvasProps) {
       const h = canvas!.clientHeight;
       ctx!.clearRect(0, 0, w, h);
 
+      // Measure text exclusion zone each frame using live viewport coordinates.
+      // Because the canvas is fixed (inset-0), viewport coords == canvas coords.
+      let hasExclusion = false;
+      let exCx = 0, exCy = 0, exHw = 0, exHh = 0, exR = 0, exScale = 0;
+      if (textRef?.current) {
+        const children = Array.from(textRef.current.children) as HTMLElement[];
+        const elements = children.length > 0 ? children : [textRef.current];
+        let exLeft = Infinity, exTop = Infinity, exRight = -Infinity, exBottom = -Infinity;
+        for (const el of elements) {
+          const r = el.getBoundingClientRect();
+          exLeft   = Math.min(exLeft,   r.left);
+          exTop    = Math.min(exTop,    r.top);
+          exRight  = Math.max(exRight,  r.right);
+          exBottom = Math.max(exBottom, r.bottom);
+        }
+        exLeft   -= TEXT_EXCLUSION_PADDING_SIDE;
+        exTop    -= TEXT_EXCLUSION_PADDING_TOP;
+        exRight  += TEXT_EXCLUSION_PADDING_SIDE;
+        exBottom += TEXT_EXCLUSION_PADDING_BTM;
+
+        if (exRight > exLeft && exBottom > exTop) {
+          hasExclusion = true;
+          exCx   = (exLeft + exRight) / 2;
+          exCy   = (exTop + exBottom) / 2;
+          exHw   = (exRight - exLeft) / 2;
+          exHh   = (exBottom - exTop) / 2;
+          exR    = Math.min(exHw, exHh) * 0.7;
+          exScale = Math.min(exHw, exHh);
+        }
+      }
+
       const now = performance.now();
       for (const dot of dots) {
         // Morph toward target color and size (cascade: wait until morphAt)
@@ -222,7 +189,35 @@ export default function DotCanvas({ className, textRef }: DotCanvasProps) {
         dot.x += dot.vx;
         dot.y += dot.vy;
 
-        if (dot.excluded) continue;
+        // Bottom fade: 100px band, reaches 0% at 10px before the content edge
+        // HeroSection is calc(100vh + 100px), so services start 100px below the fold
+        const contentTopY = window.innerHeight + 100 - Math.min(window.scrollY, window.innerHeight);
+        if (dot.homeY > contentTopY - 100) {
+          const t = Math.min((dot.homeY - (contentTopY - 100)) / 90, 1);
+          if (dot.roll > 1 - t) continue;
+        }
+
+        // Per-frame exclusion: test home position against the live text zone
+        if (hasExclusion) {
+          const qx = Math.abs(dot.homeX - exCx) - exHw + exR;
+          const qy = Math.abs(dot.homeY - exCy) - exHh + exR;
+          const sdf = Math.min(Math.max(qx, qy), 0)
+                    + Math.sqrt(Math.max(qx, 0) ** 2 + Math.max(qy, 0) ** 2)
+                    - exR;
+          if (sdf < 0) {
+            const depth = -sdf / exScale;
+            let keepProb: number;
+            if (depth < 0.1) {
+              keepProb = 1 - (0.6 * depth / 0.1);            // 1.0 → 0.30
+            } else if (depth < 0.3) {
+              keepProb = 0.3 - (0.25 * (depth - 0.1) / 0.2); // 0.30 → 0.05
+            } else {
+              keepProb = 0.0;
+            }
+            if (dot.roll > keepProb) continue;
+          }
+        }
+
         const radius = Math.max(dot.size, 0.3);
         if (radius < 0.1) continue;
 
@@ -293,5 +288,5 @@ export default function DotCanvas({ className, textRef }: DotCanvasProps) {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className={className} />;
+  return <canvas ref={canvasRef} className={className} style={style} />;
 }
