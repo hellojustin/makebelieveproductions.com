@@ -22,7 +22,7 @@ export default function HeroSection() {
           PRODUCTIONS
         </h1>
         <p className="mt-5 text-xs tracking-[0.3em] text-violet-300/70 uppercase">
-          Software for people who make things
+          Magical software for visionaries
         </p>
         {/* <span className="mt-10 text-violet-300/40 text-sm animate-bounce">↓</span> */}
       </div>

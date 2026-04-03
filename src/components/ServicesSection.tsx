@@ -1,6 +1,6 @@
 const services = [
   {
-    name: "Consulting Call",
+    name: "Technical Advising",
     description:
       "We learn about your project and give you a clear direction. One conversation, one concrete next step.",
   },
