@@ -20,17 +20,18 @@
 }
 
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
   overscroll-behavior-x: none;
 }
 
 body {
   background: #08051a;
   color: var(--foreground);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
-.sticky-hero {
+.content-fade {
   position: sticky;
   top: 0vh;
+  background: linear-gradient(0deg, rgba(8, 5, 26, 0) 0%, rgba(8, 5, 26, 1) 40%);
 }

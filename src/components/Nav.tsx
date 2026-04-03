@@ -1,6 +1,6 @@
 export default function Nav() {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-10 flex justify-between items-center px-10 py-6">
+    <nav className="fixed top-0 left-0 right-0 z-101 flex justify-between items-center px-10 py-6">
       <span className="text-white font-light tracking-widest text-sm">
         MAKE BELIEVE
       </span>

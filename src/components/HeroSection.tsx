@@ -7,9 +7,9 @@ export default function HeroSection() {
   const textRef = useRef<HTMLDivElement>(null);
 
   return (
-    <section className="relative h-[calc(100vh+100px)] w-full">
+    <section className="relative h-[calc(100vh+100px)] w-full z-100">
       <div className="h-[calc(100vh+100px)]">
-        <DotCanvas className="fixed inset-0 w-full h-full z-0" textRef={textRef} />
+        <DotCanvas className="fixed inset-0 w-full h-full" textRef={textRef} />
       </div>
 
       <div
