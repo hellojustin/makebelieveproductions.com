@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import type { ImageToDotsResult } from "@/lib/image-to-dots";
 
 const STIFFNESS = 0.06;
@@ -8,13 +8,17 @@ const DAMPING = 0.82;
 const REPULSION_RADIUS = 120;
 const REPULSION_STRENGTH = 6;
 const IMAGE_COUNT = 6;
-const CYCLE_INTERVAL = 5000;   // ms between image transitions
-const CASCADE_DURATION = 1500; // ms over which dots stagger their transition start
+const CYCLE_INTERVAL = 10000;   // ms between image transitions
+const CASCADE_DURATION = 1500; // ms for the arc wavefront to sweep across the canvas
 const MORPH_SPEED = 0.12;      // exponential approach per frame — ~99% done in 0.5s
 
-const TEXT_EXCLUSION_PADDING_SIDE = 72; // px on left and right of text block
+const OSC_AMPLITUDE = 2;               // px of gentle drift
+const OSC_PERIOD = 4000;               // ms for one full oscillation cycle
+
+const TEXT_EXCLUSION_PADDING_LEFT = 100; // px on left and right of text block
+const TEXT_EXCLUSION_PADDING_RIGHT = 100; // px on left and right of text block
 const TEXT_EXCLUSION_PADDING_TOP  = 64; // px above text block
-const TEXT_EXCLUSION_PADDING_BTM  = 64; // px below text block
+const TEXT_EXCLUSION_PADDING_BTM  = 200; // px below text block
 
 interface DotState {
   homeX: number;
@@ -37,6 +41,21 @@ interface DotState {
   morphAt: number;
   // Stable random roll [0,1] used for per-frame probabilistic exclusion
   roll: number;
+  // Per-dot oscillation
+  oscDx: number;
+  oscDy: number;
+  oscPhase: number;
+  // Per-dot mouse reaction variation
+  repMul: number;
+  stiffMul: number;
+}
+
+export interface DotCanvasHandle {
+  pause: () => void;
+  play: () => void;
+  next: () => void;
+  prev: () => void;
+  isPaused: () => boolean;
 }
 
 interface DotCanvasProps {
@@ -45,8 +64,93 @@ interface DotCanvasProps {
   textRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export default function DotCanvas({ className, style, textRef }: DotCanvasProps) {
+interface ArcCurve {
+  p0x: number; p0y: number;
+  p1x: number; p1y: number;
+  p2x: number; p2y: number;
+}
+
+function edgePoint(edge: number, w: number, h: number): [number, number] {
+  const t = 0.1 + Math.random() * 0.8;
+  switch (edge) {
+    case 0: return [t * w, 0];
+    case 1: return [w, t * h];
+    case 2: return [t * w, h];
+    case 3: return [0, t * h];
+    default: return [0, 0];
+  }
+}
+
+function generateRandomArc(w: number, h: number): ArcCurve {
+  const startEdge = Math.floor(Math.random() * 4);
+  const r = Math.random();
+  const endEdge = r < 0.6
+    ? (startEdge + 2) % 4
+    : r < 0.8
+      ? (startEdge + 1) % 4
+      : (startEdge + 3) % 4;
+
+  const [p0x, p0y] = edgePoint(startEdge, w, h);
+  const [p2x, p2y] = edgePoint(endEdge, w, h);
+
+  const mx = (p0x + p2x) / 2;
+  const my = (p0y + p2y) / 2;
+  const dx = p2x - p0x;
+  const dy = p2y - p0y;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const perpX = -dy / len;
+  const perpY = dx / len;
+  const offset = (0.3 + Math.random() * 0.5) * Math.max(w, h)
+    * (Math.random() < 0.5 ? 1 : -1);
+
+  return {
+    p0x, p0y,
+    p1x: mx + perpX * offset,
+    p1y: my + perpY * offset,
+    p2x, p2y,
+  };
+}
+
+function evalQuadBezier(arc: ArcCurve, t: number): [number, number] {
+  const u = 1 - t;
+  return [
+    u * u * arc.p0x + 2 * u * t * arc.p1x + t * t * arc.p2x,
+    u * u * arc.p0y + 2 * u * t * arc.p1y + t * t * arc.p2y,
+  ];
+}
+
+function closestOnArc(
+  arc: ArcCurve, px: number, py: number,
+): { t: number; dist: number } {
+  const SAMPLES = 80;
+  let bestT = 0;
+  let bestD2 = Infinity;
+  for (let i = 0; i <= SAMPLES; i++) {
+    const t = i / SAMPLES;
+    const [bx, by] = evalQuadBezier(arc, t);
+    const d2 = (px - bx) ** 2 + (py - by) ** 2;
+    if (d2 < bestD2) {
+      bestD2 = d2;
+      bestT = t;
+    }
+  }
+  return { t: bestT, dist: Math.sqrt(bestD2) };
+}
+
+const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
+  function DotCanvas({ className, style, textRef }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const controlsRef = useRef<DotCanvasHandle>({
+    pause() {}, play() {}, next() {}, prev() {}, isPaused() { return false; },
+  });
+
+  useImperativeHandle(ref, () => ({
+    pause:    () => controlsRef.current.pause(),
+    play:     () => controlsRef.current.play(),
+    next:     () => controlsRef.current.next(),
+    prev:     () => controlsRef.current.prev(),
+    isPaused: () => controlsRef.current.isPaused(),
+  }), []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -62,6 +166,7 @@ export default function DotCanvas({ className, style, textRef }: DotCanvasProps)
     let currentImageIndex = 0;
     let currentData: ImageToDotsResult | null = null;
     let preloadedData: ImageToDotsResult | null = null;
+    let paused = false;
 
     function loadImage(index: number): Promise<ImageToDotsResult> {
       return fetch(`/data/dots-${index + 1}.json`).then((r) => r.json());
@@ -76,6 +181,7 @@ export default function DotCanvas({ className, style, textRef }: DotCanvasProps)
         const hx = d.x * data.canvasWidth * scale + offsetX;
         const hy = d.y * data.canvasHeight * scale + offsetY;
         const sz = d.size * scale;
+        const angle = Math.random() * Math.PI * 2;
         return {
           homeX: hx, homeY: hy,
           x: hx, y: hy,
@@ -84,6 +190,11 @@ export default function DotCanvas({ className, style, textRef }: DotCanvasProps)
           tr: d.r, tg: d.g, tb: d.b, ts: sz,
           morphAt: 0,
           roll: Math.random(),
+          oscDx: Math.cos(angle),
+          oscDy: Math.sin(angle),
+          oscPhase: Math.random() * Math.PI * 2,
+          repMul: 0.3 + Math.random() * 2.2,
+          stiffMul: 0.3 + Math.random() * 1.0,
         };
       });
     }
@@ -92,13 +203,21 @@ export default function DotCanvas({ className, style, textRef }: DotCanvasProps)
       const scale = Math.max(canvasW / data.canvasWidth, canvasH / data.canvasHeight);
       const now = performance.now();
       const n = Math.min(dots.length, data.dots.length);
+
+      const arc = generateRandomArc(canvasW, canvasH);
+      const maxDiag = Math.sqrt(canvasW * canvasW + canvasH * canvasH);
+
       for (let i = 0; i < n; i++) {
         const d = data.dots[i];
         dots[i].tr = d.r;
         dots[i].tg = d.g;
         dots[i].tb = d.b;
         dots[i].ts = d.size * scale;
-        dots[i].morphAt = now + Math.random() * CASCADE_DURATION;
+
+        const { t, dist } = closestOnArc(arc, dots[i].homeX, dots[i].homeY);
+        const arcDelay = t * CASCADE_DURATION;
+        const distDelay = (dist / maxDiag) * CASCADE_DURATION * 0.7;
+        dots[i].morphAt = now + arcDelay + distDelay + Math.random() * 100;
       }
     }
 
@@ -120,12 +239,41 @@ export default function DotCanvas({ className, style, textRef }: DotCanvasProps)
     }
 
     function cycleImage() {
-      if (!preloadedData || dots.length === 0) return;
+      if (paused || !preloadedData || dots.length === 0) return;
       currentImageIndex = (currentImageIndex + 1) % IMAGE_COUNT;
       applyTransition(preloadedData, canvas!.clientWidth, canvas!.clientHeight);
       preloadedData = null;
       preloadNext();
     }
+
+    function goToImage(index: number) {
+      if (dots.length === 0) return;
+      loadImage(index).then((data) => {
+        currentImageIndex = index;
+        applyTransition(data, canvas!.clientWidth, canvas!.clientHeight);
+        preloadedData = null;
+        preloadNext();
+      });
+    }
+
+    function resetTimer() {
+      clearInterval(cycleTimer);
+      cycleTimer = setInterval(cycleImage, CYCLE_INTERVAL);
+    }
+
+    controlsRef.current = {
+      pause() { paused = true; },
+      play()  { paused = false; resetTimer(); },
+      isPaused() { return paused; },
+      next() {
+        goToImage((currentImageIndex + 1) % IMAGE_COUNT);
+        if (!paused) resetTimer();
+      },
+      prev() {
+        goToImage((currentImageIndex - 1 + IMAGE_COUNT) % IMAGE_COUNT);
+        if (!paused) resetTimer();
+      },
+    };
 
     function tick() {
       const w = canvas!.clientWidth;
@@ -147,9 +295,9 @@ export default function DotCanvas({ className, style, textRef }: DotCanvasProps)
           exRight  = Math.max(exRight,  r.right);
           exBottom = Math.max(exBottom, r.bottom);
         }
-        exLeft   -= TEXT_EXCLUSION_PADDING_SIDE;
+        exLeft   -= TEXT_EXCLUSION_PADDING_LEFT;
         exTop    -= TEXT_EXCLUSION_PADDING_TOP;
-        exRight  += TEXT_EXCLUSION_PADDING_SIDE;
+        exRight  += TEXT_EXCLUSION_PADDING_RIGHT;
         exBottom += TEXT_EXCLUSION_PADDING_BTM;
 
         if (exRight > exLeft && exBottom > exTop) {
@@ -178,12 +326,14 @@ export default function DotCanvas({ className, style, textRef }: DotCanvasProps)
         const dy = dot.y - mouseY;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < REPULSION_RADIUS && dist > 0) {
-          const force = (1 - dist / REPULSION_RADIUS) * REPULSION_STRENGTH;
+          const force = (1 - dist / REPULSION_RADIUS) * REPULSION_STRENGTH * dot.repMul;
           dot.vx += (dx / dist) * force;
           dot.vy += (dy / dist) * force;
         }
-        dot.vx += (dot.homeX - dot.x) * STIFFNESS;
-        dot.vy += (dot.homeY - dot.y) * STIFFNESS;
+        const osc = Math.sin(now * (Math.PI * 2 / OSC_PERIOD) + dot.oscPhase) * OSC_AMPLITUDE;
+        const stiff = STIFFNESS * dot.stiffMul;
+        dot.vx += (dot.homeX + dot.oscDx * osc - dot.x) * stiff;
+        dot.vy += (dot.homeY + dot.oscDy * osc - dot.y) * stiff;
         dot.vx *= DAMPING;
         dot.vy *= DAMPING;
         dot.x += dot.vx;
@@ -289,4 +439,6 @@ export default function DotCanvas({ className, style, textRef }: DotCanvasProps)
   }, []);
 
   return <canvas ref={canvasRef} className={className} style={style} />;
-}
+});
+
+export default DotCanvas;

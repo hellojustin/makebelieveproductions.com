@@ -78,7 +78,7 @@ export async function imageToDots(
     gridSpacing = 8,
     canvasWidth = 1440,
     canvasHeight = 900,
-    maxSizeFraction = 0.48,
+    maxSizeFraction = 0.6,
     minSizeFraction = 0.08,
     darknessThreshold = 0.02,
     jitter = 0.4,

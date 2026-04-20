@@ -25,8 +25,8 @@ const getArg = (flag: string, fallback: string) => {
 
 const OPTIONS = {
   gridSpacing: parseInt(getArg("--spacing", "8"), 10),
-  canvasWidth: parseInt(getArg("--width", "1440"), 10),
-  canvasHeight: parseInt(getArg("--height", "900"), 10),
+  canvasWidth: parseInt(getArg("--width", "1920"), 10),
+  canvasHeight: parseInt(getArg("--height", "1080"), 10),
   darknessThreshold: 0, // include ALL grid positions — required for consistent dot count
 };
 
@@ -38,7 +38,7 @@ async function main() {
   for (let i = 1; i <= 6; i++) {
     const inputPath = path.resolve(
       process.cwd(),
-      `.claude/reference/hero-reference-${i}.jpeg`
+      `.claude/reference/hero-${i}.jpg`
     );
     const outputPath = path.resolve(process.cwd(), `public/data/dots-${i}.json`);
 
