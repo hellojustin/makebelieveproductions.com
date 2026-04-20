@@ -1,15 +1,21 @@
-// `lvh` (large viewport height) locks to the size when browser chrome is
-// hidden — stable across iOS Safari's URL bar collapse, so the canvas keeps
-// constant proportions during scroll instead of reflowing mid-animation.
+// `svh` (small viewport height) is the height when ALL browser chrome is
+// visible — the worst-case visible area. It's still stable during scroll
+// (the value never changes), so we keep the original "constant proportions"
+// fix, while also guaranteeing the text + controls fit inside the visible
+// viewport on devices with both top and bottom chrome (mobile Safari).
+//
+// When chrome retracts, the canvas doesn't grow to fill the new space —
+// there's a small dark strip below it, but body background is the same
+// #08051a so it reads as continuous.
 .heroSection {
   position: relative;
   width: 100%;
-  height: calc(100lvh + 100px);
+  height: calc(100svh + 100px);
   z-index: 100;
 }
 
 .heroSpacer {
-  height: calc(100lvh + 100px);
+  height: calc(100svh + 100px);
 }
 
 .heroCanvas {
@@ -17,7 +23,7 @@
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100lvh;
+  height: 100svh;
   // Disables browser-managed touch gestures (scroll, pinch-zoom) on the
   // canvas so dragging across it doesn't move the page. IconButton taps and
   // our own touch listeners still fire.

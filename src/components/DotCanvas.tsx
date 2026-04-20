@@ -19,6 +19,13 @@ const TEXT_EXCLUSION_PADDING_RIGHT = 100; // px on left and right of text block
 const TEXT_EXCLUSION_PADDING_TOP  = 64; // px above text block
 const TEXT_EXCLUSION_PADDING_BTM  = 200; // px below text block
 
+// Color used for "muted" dots inside the text exclusion zone — slightly
+// lighter than the body background (#08051a) so the dots are still legible
+// as a faint texture rather than disappearing entirely.
+const MUTED_R = 24;
+const MUTED_G = 20;
+const MUTED_B = 50;
+
 interface DotState {
   homeX: number;
   homeY: number;
@@ -355,7 +362,7 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
         dot.y += dot.vy;
 
         // Bottom fade: 100px band, reaches 0% at 10px before the content edge.
-        // HeroSection is calc(100lvh + 100px), so services start 100px below
+        // HeroSection is calc(100svh + 100px), so services start 100px below
         // the fold. Use canvas height (stable across iOS chrome collapse)
         // rather than window.innerHeight (which jitters as chrome retracts).
         const contentTopY = h + 100 - Math.min(window.scrollY, h);
@@ -364,7 +371,12 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
           if (dot.roll > 1 - t) continue;
         }
 
-        // Per-frame exclusion: test home position against the live text zone
+        // Per-frame exclusion: test home position against the live text zone.
+        // Dots that lose the keep-probability roll aren't dropped — they're
+        // re-tinted to a near-background color, so the underlying grid stays
+        // intact and the text reads against a dimmed (rather than empty)
+        // backdrop.
+        let useMutedColor = false;
         if (hasExclusion) {
           const qx = Math.abs(dot.homeX - exCx) - exHw + exR;
           const qy = Math.abs(dot.homeY - exCy) - exHh + exR;
@@ -381,7 +393,7 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
             } else {
               keepProb = 0.0;
             }
-            if (dot.roll > keepProb) continue;
+            if (dot.roll > keepProb) useMutedColor = true;
           }
         }
 
@@ -390,7 +402,9 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
 
         ctx!.beginPath();
         ctx!.arc(dot.x, dot.y, radius, 0, Math.PI * 2);
-        ctx!.fillStyle = `rgb(${Math.round(dot.r)},${Math.round(dot.g)},${Math.round(dot.b)})`;
+        ctx!.fillStyle = useMutedColor
+          ? `rgb(${MUTED_R},${MUTED_G},${MUTED_B})`
+          : `rgb(${Math.round(dot.r)},${Math.round(dot.g)},${Math.round(dot.b)})`;
         ctx!.fill();
       }
 
@@ -448,6 +462,28 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
 
     function onResize() { resize(currentData); }
 
+    // The canvas is fixed and full-viewport with `touch-action: none`, so it
+    // would normally swallow every drag — including drags meant to scroll
+    // the services section below. Once the hero text has scrolled out of
+    // view, flip the canvas to `pointer-events: none` so input passes
+    // straight through to whatever is underneath. When the user scrolls
+    // back up to the hero, restore interactivity.
+    let canvasInteractive = true;
+    function updateCanvasInteractivity() {
+      const t = textRef?.current;
+      const heroVisible = t ? t.getBoundingClientRect().bottom > 0 : true;
+      if (heroVisible !== canvasInteractive) {
+        canvasInteractive = heroVisible;
+        canvas!.style.pointerEvents = heroVisible ? "" : "none";
+        if (!heroVisible) {
+          // Park the repulsion target offscreen so dots don't react to a
+          // stale pointer position while the canvas is non-interactive.
+          mouseX = -9999;
+          mouseY = -9999;
+        }
+      }
+    }
+
     canvas.addEventListener("mousemove", onMouseMove);
     canvas.addEventListener("mouseleave", onMouseLeave);
     canvas.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -455,6 +491,8 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
     canvas.addEventListener("touchend", onTouchEnd);
     canvas.addEventListener("touchcancel", onTouchCancel);
     window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", updateCanvasInteractivity, { passive: true });
+    updateCanvasInteractivity();
 
     return () => {
       cancelAnimationFrame(animationId);
@@ -466,6 +504,7 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
       canvas.removeEventListener("touchend", onTouchEnd);
       canvas.removeEventListener("touchcancel", onTouchCancel);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", updateCanvasInteractivity);
     };
   }, []);
 
