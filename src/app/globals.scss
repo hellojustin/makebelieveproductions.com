@@ -14,7 +14,9 @@ $color-violet-300: #c4b5fd;
 html {
   height: 100%;
   overflow-x: clip;
-  overscroll-behavior-x: none;
+  // Disables both axes: kills horizontal scroll-chaining and the iOS Safari
+  // top/bottom rubber-band so users can't pull the page into negative space.
+  overscroll-behavior: none;
 }
 
 body {
@@ -24,6 +26,7 @@ body {
   background: var(--mbp-color-bg);
   color: var(--mbp-color-fg);
   overflow-x: clip;
+  overscroll-behavior: none;
 }
 
 // Sticky gradient strip that fades the dot field into the section below.

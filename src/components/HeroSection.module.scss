@@ -1,19 +1,27 @@
+// `lvh` (large viewport height) locks to the size when browser chrome is
+// hidden — stable across iOS Safari's URL bar collapse, so the canvas keeps
+// constant proportions during scroll instead of reflowing mid-animation.
 .heroSection {
   position: relative;
   width: 100%;
-  height: calc(100vh + 100px);
+  height: calc(100lvh + 100px);
   z-index: 100;
 }
 
 .heroSpacer {
-  height: calc(100vh + 100px);
+  height: calc(100lvh + 100px);
 }
 
 .heroCanvas {
   position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100lvh;
+  // Disables browser-managed touch gestures (scroll, pinch-zoom) on the
+  // canvas so dragging across it doesn't move the page. IconButton taps and
+  // our own touch listeners still fire.
+  touch-action: none;
 }
 
 .heroText {
@@ -24,7 +32,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  pointer-events: none;
+  // The canvas has `touch-action: none`, so the text block is the only
+  // place a user can scroll from on mobile. `pan-y` allows vertical scroll
+  // while still letting taps pass; text selection works as normal.
+  touch-action: pan-y;
 
   @media (min-width: 640px) {
     padding-right: 2rem;

@@ -55,7 +55,7 @@ export default function HeroSection() {
         <p className={styles.heroTagline}>Magical software for visionaries</p>
       </div>
 
-      <div className={styles.controls}>
+      {/* <div className={styles.controls}>
         <IconButton variant="plain" sx={controlButtonSx} onClick={prev} aria-label="Previous image">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -83,7 +83,7 @@ export default function HeroSection() {
             <path d="M5 2L10 7L5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </IconButton>
-      </div>
+      </div> */}
     </Box>
   );
 }

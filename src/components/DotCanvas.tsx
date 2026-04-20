@@ -354,9 +354,11 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
         dot.x += dot.vx;
         dot.y += dot.vy;
 
-        // Bottom fade: 100px band, reaches 0% at 10px before the content edge
-        // HeroSection is calc(100vh + 100px), so services start 100px below the fold
-        const contentTopY = window.innerHeight + 100 - Math.min(window.scrollY, window.innerHeight);
+        // Bottom fade: 100px band, reaches 0% at 10px before the content edge.
+        // HeroSection is calc(100lvh + 100px), so services start 100px below
+        // the fold. Use canvas height (stable across iOS chrome collapse)
+        // rather than window.innerHeight (which jitters as chrome retracts).
+        const contentTopY = h + 100 - Math.min(window.scrollY, h);
         if (dot.homeY > contentTopY - 100) {
           const t = Math.min((dot.homeY - (contentTopY - 100)) / 90, 1);
           if (dot.roll > 1 - t) continue;
