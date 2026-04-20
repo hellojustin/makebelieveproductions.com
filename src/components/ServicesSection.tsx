@@ -1,3 +1,9 @@
+"use client";
+
+import Box from "@mui/joy/Box";
+import Card from "@mui/joy/Card";
+import Typography from "@mui/joy/Typography";
+
 const services = [
   {
     name: "Technical Advising",
@@ -18,28 +24,73 @@ const services = [
 
 export default function ServicesSection() {
   return (
-    <section className="relative z-10 bg-[#08051a] w-full py-32 px-8 min-h-[150vh]">
-      <div className="max-w-6xl mx-auto">
-        <p className="text-xs tracking-[0.3em] text-violet-400/60 uppercase mb-16">
+    <Box
+      component="section"
+      sx={{
+        position: "relative",
+        zIndex: 10,
+        background: "var(--mbp-color-bg)",
+        width: "100%",
+        py: 16,
+        px: 4,
+        minHeight: "150vh",
+      }}
+    >
+      <Box sx={{ maxWidth: "72rem", mx: "auto" }}>
+        <Typography
+          sx={{
+            fontSize: "0.75rem",
+            letterSpacing: "0.3em",
+            color: "rgba(167, 139, 250, 0.6)",
+            textTransform: "uppercase",
+            mb: 8,
+          }}
+        >
           What we do
-        </p>
+        </Typography>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+            gap: 4,
+          }}
+        >
           {services.map((service) => (
-            <div
+            <Card
               key={service.name}
-              className="border border-white/10 rounded-2xl p-8 flex flex-col gap-4"
+              variant="outlined"
+              sx={{
+                background: "transparent",
+                borderColor: "rgba(255, 255, 255, 0.1)",
+                borderRadius: "1rem",
+                p: 4,
+                gap: 2,
+              }}
             >
-              <h3 className="text-white font-light text-xl tracking-wide">
+              <Typography
+                sx={{
+                  color: "common.white",
+                  fontWeight: 300,
+                  fontSize: "1.25rem",
+                  letterSpacing: "0.025em",
+                }}
+              >
                 {service.name}
-              </h3>
-              <p className="text-violet-200/50 text-sm leading-relaxed">
+              </Typography>
+              <Typography
+                sx={{
+                  color: "rgba(221, 214, 254, 0.5)",
+                  fontSize: "0.875rem",
+                  lineHeight: 1.7,
+                }}
+              >
                 {service.description}
-              </p>
-            </div>
+              </Typography>
+            </Card>
           ))}
-        </div>
-      </div>
-    </section>
+        </Box>
+      </Box>
+    </Box>
   );
 }

@@ -1,14 +1,15 @@
+import Box from "@mui/joy/Box";
 import Nav from "@/components/Nav";
 import HeroSection from "@/components/HeroSection";
 import ServicesSection from "@/components/ServicesSection";
 
 export default function Home() {
   return (
-    <main className="relative">
+    <Box component="main" sx={{ position: "relative" }}>
       <Nav />
       <HeroSection />
-      <div className='content-fade w-full h-[150px]  z-99'></div>
+      <div className="content-fade" />
       <ServicesSection />
-    </main>
+    </Box>
   );
 }

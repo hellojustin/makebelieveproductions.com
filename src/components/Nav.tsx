@@ -1,15 +1,49 @@
+"use client";
+
+import Box from "@mui/joy/Box";
+import Link from "@mui/joy/Link";
+import Typography from "@mui/joy/Typography";
+
 export default function Nav() {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-101 flex justify-between items-center px-10 py-6">
-      <span className="text-white font-light tracking-widest text-sm">
+    <Box
+      component="nav"
+      sx={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 101,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        px: 5,
+        py: 3,
+      }}
+    >
+      <Typography
+        level="body-sm"
+        sx={{
+          color: "common.white",
+          fontWeight: 300,
+          letterSpacing: "0.15em",
+        }}
+      >
         MAKE BELIEVE
-      </span>
-      <a
+      </Typography>
+      <Link
         href="mailto:justin@makebelieveproductions.com"
-        className="text-violet-300/70 text-sm tracking-wide hover:text-violet-300 transition-colors"
+        underline="none"
+        sx={{
+          fontSize: "sm",
+          letterSpacing: "0.05em",
+          color: "rgba(196, 181, 253, 0.7)",
+          "&:hover": { color: "var(--mbp-color-violet-300)" },
+          transition: "color 200ms",
+        }}
       >
         Get in touch →
-      </a>
-    </nav>
+      </Link>
+    </Box>
   );
 }

@@ -7,7 +7,6 @@ const STIFFNESS = 0.06;
 const DAMPING = 0.82;
 const REPULSION_RADIUS = 120;
 const REPULSION_STRENGTH = 6;
-const IMAGE_COUNT = 6;
 const CYCLE_INTERVAL = 10000;   // ms between image transitions
 const CASCADE_DURATION = 1500; // ms for the arc wavefront to sweep across the canvas
 const MORPH_SPEED = 0.12;      // exponential approach per frame — ~99% done in 0.5s
@@ -62,6 +61,11 @@ interface DotCanvasProps {
   className?: string;
   style?: React.CSSProperties;
   textRef?: React.RefObject<HTMLDivElement | null>;
+}
+
+interface Manifest {
+  generatedAt: string;
+  images: string[];
 }
 
 interface ArcCurve {
@@ -167,9 +171,15 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
     let currentData: ImageToDotsResult | null = null;
     let preloadedData: ImageToDotsResult | null = null;
     let paused = false;
+    let imageFiles: string[] = [];
 
     function loadImage(index: number): Promise<ImageToDotsResult> {
-      return fetch(`/data/dots-${index + 1}.json`).then((r) => r.json());
+      const filename = imageFiles[index];
+      return fetch(`/data/${filename}`).then((r) => r.json());
+    }
+
+    function loadManifest(): Promise<Manifest> {
+      return fetch("/data/manifest.json").then((r) => r.json());
     }
 
     function buildDots(data: ImageToDotsResult, canvasW: number, canvasH: number) {
@@ -232,22 +242,23 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
     }
 
     function preloadNext() {
-      const nextIndex = (currentImageIndex + 1) % IMAGE_COUNT;
+      if (imageFiles.length < 2) return;
+      const nextIndex = (currentImageIndex + 1) % imageFiles.length;
       loadImage(nextIndex).then((data) => {
         preloadedData = data;
       });
     }
 
     function cycleImage() {
-      if (paused || !preloadedData || dots.length === 0) return;
-      currentImageIndex = (currentImageIndex + 1) % IMAGE_COUNT;
+      if (paused || !preloadedData || dots.length === 0 || imageFiles.length < 2) return;
+      currentImageIndex = (currentImageIndex + 1) % imageFiles.length;
       applyTransition(preloadedData, canvas!.clientWidth, canvas!.clientHeight);
       preloadedData = null;
       preloadNext();
     }
 
     function goToImage(index: number) {
-      if (dots.length === 0) return;
+      if (dots.length === 0 || imageFiles.length === 0) return;
       loadImage(index).then((data) => {
         currentImageIndex = index;
         applyTransition(data, canvas!.clientWidth, canvas!.clientHeight);
@@ -258,7 +269,9 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
 
     function resetTimer() {
       clearInterval(cycleTimer);
-      cycleTimer = setInterval(cycleImage, CYCLE_INTERVAL);
+      if (imageFiles.length > 1) {
+        cycleTimer = setInterval(cycleImage, CYCLE_INTERVAL);
+      }
     }
 
     controlsRef.current = {
@@ -266,11 +279,13 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
       play()  { paused = false; resetTimer(); },
       isPaused() { return paused; },
       next() {
-        goToImage((currentImageIndex + 1) % IMAGE_COUNT);
+        if (imageFiles.length === 0) return;
+        goToImage((currentImageIndex + 1) % imageFiles.length);
         if (!paused) resetTimer();
       },
       prev() {
-        goToImage((currentImageIndex - 1 + IMAGE_COUNT) % IMAGE_COUNT);
+        if (imageFiles.length === 0) return;
+        goToImage((currentImageIndex - 1 + imageFiles.length) % imageFiles.length);
         if (!paused) resetTimer();
       },
     };
@@ -380,16 +395,30 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
       animationId = requestAnimationFrame(tick);
     }
 
-    // Boot: start animation immediately, load first image, then begin cycling
+    // Boot: start animation immediately so the canvas is alive while the
+    // manifest + first image stream in, then begin cycling.
     resize(null);
     animationId = requestAnimationFrame(tick);
 
-    loadImage(0).then((data) => {
-      currentData = data;
-      buildDots(data, canvas!.clientWidth, canvas!.clientHeight);
-      preloadNext();
-      cycleTimer = setInterval(cycleImage, CYCLE_INTERVAL);
-    });
+    loadManifest()
+      .then((manifest) => {
+        imageFiles = manifest.images ?? [];
+        if (imageFiles.length === 0) {
+          console.warn("[DotCanvas] manifest contained no images");
+          return;
+        }
+        return loadImage(0).then((data) => {
+          currentData = data;
+          buildDots(data, canvas!.clientWidth, canvas!.clientHeight);
+          preloadNext();
+          if (imageFiles.length > 1) {
+            cycleTimer = setInterval(cycleImage, CYCLE_INTERVAL);
+          }
+        });
+      })
+      .catch((err) => {
+        console.error("[DotCanvas] failed to load manifest", err);
+      });
 
     // Mouse
     function onMouseMove(e: MouseEvent) {
