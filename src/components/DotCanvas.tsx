@@ -23,8 +23,8 @@ const OSC_PERIOD = 4000;               // ms for one full oscillation cycle
 // scrolls — at scroll=0 the cutoff is below the canvas (no dots dropped),
 // and by the time the page has scrolled one viewport-height the cutoff has
 // reached STRIP_HEIGHT_PX, leaving only the header band visible.
-const STRIP_HEIGHT_PX = 50;
-const FADE_BAND_PX = 5;
+const STRIP_HEIGHT_PX = 55;
+const FADE_BAND_PX = 15;
 
 // Page background color, drawn behind the dots so content scrolling under
 // the dot region dissolves to invisibility before it can show through the
