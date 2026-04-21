@@ -53,12 +53,12 @@ $text-stroke-color: #08051a;
   letter-spacing: 0.2em;
   color: #ffffff;
   -webkit-text-fill-color: #fff;
-  -webkit-text-stroke: 15px $text-stroke-color;
+  -webkit-text-stroke: 1rem $text-stroke-color;
   paint-order: stroke fill;
   text-align: right;
   line-height: 1.1;
   text-transform: uppercase;
-  font-size: 1.875rem;
+  font-size: 2rem;
   margin: 0;
 
   @media (min-width: 640px) {
@@ -76,7 +76,7 @@ $text-stroke-color: #08051a;
   letter-spacing: 0.3em;
   color: rgba(196, 181, 253, 0.7);
   -webkit-text-fill-color: rgba(196, 181, 253, 0.7);
-  -webkit-text-stroke: 8px $text-stroke-color;
+  -webkit-text-stroke: 0.4rem $text-stroke-color;
   paint-order: stroke fill;
   text-transform: uppercase;
 

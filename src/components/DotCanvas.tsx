@@ -15,18 +15,6 @@ const MORPH_SPEED = 0.12;      // exponential approach per frame — ~99% done i
 const OSC_AMPLITUDE = 2;               // px of gentle drift
 const OSC_PERIOD = 4000;               // ms for one full oscillation cycle
 
-const TEXT_EXCLUSION_PADDING_LEFT = 20; // px on left and right of text block
-const TEXT_EXCLUSION_PADDING_RIGHT = 20; // px on left and right of text block
-const TEXT_EXCLUSION_PADDING_TOP  = 20; // px above text block
-const TEXT_EXCLUSION_PADDING_BTM  = 20; // px below text block
-
-// Color used for "muted" dots inside the text exclusion zone — slightly
-// lighter than the body background (#08051a) so the dots are still legible
-// as a faint texture rather than disappearing entirely.
-const MUTED_R = 24;
-const MUTED_G = 20;
-const MUTED_B = 50;
-
 interface DotState {
   homeX: number;
   homeY: number;
@@ -68,7 +56,6 @@ export interface DotCanvasHandle {
 interface DotCanvasProps {
   className?: string;
   style?: React.CSSProperties;
-  textRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 interface ArcCurve {
@@ -145,7 +132,7 @@ function closestOnArc(
 }
 
 const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
-  function DotCanvas({ className, style, textRef }, ref) {
+  function DotCanvas({ className, style }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controlsRef = useRef<DotCanvasHandle>({
     pause() {}, play() {}, next() {}, prev() {}, isPaused() { return false; },
@@ -298,37 +285,6 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
       const h = canvas!.clientHeight;
       ctx!.clearRect(0, 0, w, h);
 
-      // Measure text exclusion zone each frame using live viewport coordinates.
-      // Because the canvas is fixed (inset-0), viewport coords == canvas coords.
-      let hasExclusion = false;
-      let exCx = 0, exCy = 0, exHw = 0, exHh = 0, exR = 0, exScale = 0;
-      if (textRef?.current) {
-        const children = Array.from(textRef.current.children) as HTMLElement[];
-        const elements = children.length > 0 ? children : [textRef.current];
-        let exLeft = Infinity, exTop = Infinity, exRight = -Infinity, exBottom = -Infinity;
-        for (const el of elements) {
-          const r = el.getBoundingClientRect();
-          exLeft   = Math.min(exLeft,   r.left);
-          exTop    = Math.min(exTop,    r.top);
-          exRight  = Math.max(exRight,  r.right);
-          exBottom = Math.max(exBottom, r.bottom);
-        }
-        exLeft   -= TEXT_EXCLUSION_PADDING_LEFT;
-        exTop    -= TEXT_EXCLUSION_PADDING_TOP;
-        exRight  += TEXT_EXCLUSION_PADDING_RIGHT;
-        exBottom += TEXT_EXCLUSION_PADDING_BTM;
-
-        if (exRight > exLeft && exBottom > exTop) {
-          hasExclusion = true;
-          exCx   = (exLeft + exRight) / 2;
-          exCy   = (exTop + exBottom) / 2;
-          exHw   = (exRight - exLeft) / 2;
-          exHh   = (exBottom - exTop) / 2;
-          exR    = Math.min(exHw, exHh) * 0.7;
-          exScale = Math.min(exHw, exHh);
-        }
-      }
-
       const now = performance.now();
       for (const dot of dots) {
         // Morph toward target color and size (cascade: wait until morphAt)
@@ -367,40 +323,12 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
           if (dot.roll > 1 - t) continue;
         }
 
-        // Per-frame exclusion: test home position against the live text zone.
-        // Dots that lose the keep-probability roll aren't dropped — they're
-        // re-tinted to a near-background color, so the underlying grid stays
-        // intact and the text reads against a dimmed (rather than empty)
-        // backdrop.
-        let useMutedColor = false;
-        if (hasExclusion) {
-          const qx = Math.abs(dot.homeX - exCx) - exHw + exR;
-          const qy = Math.abs(dot.homeY - exCy) - exHh + exR;
-          const sdf = Math.min(Math.max(qx, qy), 0)
-                    + Math.sqrt(Math.max(qx, 0) ** 2 + Math.max(qy, 0) ** 2)
-                    - exR;
-          if (sdf < 0) {
-            const depth = -sdf / exScale;
-            let keepProb: number;
-            if (depth < 0.1) {
-              keepProb = 1 - (0.6 * depth / 0.1);            // 1.0 → 0.30
-            } else if (depth < 0.3) {
-              keepProb = 0.3 - (0.25 * (depth - 0.1) / 0.2); // 0.30 → 0.05
-            } else {
-              keepProb = 0.0;
-            }
-            if (dot.roll > keepProb) useMutedColor = true;
-          }
-        }
-
         const radius = Math.max(dot.size, 0.3);
         if (radius < 0.1) continue;
 
         ctx!.beginPath();
         ctx!.arc(dot.x, dot.y, radius, 0, Math.PI * 2);
-        ctx!.fillStyle = useMutedColor
-          ? `rgb(${MUTED_R},${MUTED_G},${MUTED_B})`
-          : `rgb(${Math.round(dot.r)},${Math.round(dot.g)},${Math.round(dot.b)})`;
+        ctx!.fillStyle = `rgb(${Math.round(dot.r)},${Math.round(dot.g)},${Math.round(dot.b)})`;
         ctx!.fill();
       }
 
@@ -457,14 +385,14 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
 
     // The canvas is fixed and full-viewport with `touch-action: none`, so it
     // would normally swallow every drag — including drags meant to scroll
-    // the services section below. Once the hero text has scrolled out of
+    // the services section below. Once the hero section has scrolled out of
     // view, flip the canvas to `pointer-events: none` so input passes
     // straight through to whatever is underneath. When the user scrolls
     // back up to the hero, restore interactivity.
     let canvasInteractive = true;
     function updateCanvasInteractivity() {
-      const t = textRef?.current;
-      const heroVisible = t ? t.getBoundingClientRect().bottom > 0 : true;
+      const heroBox = canvas!.parentElement?.getBoundingClientRect();
+      const heroVisible = heroBox ? heroBox.bottom > 0 : true;
       if (heroVisible !== canvasInteractive) {
         canvasInteractive = heroVisible;
         canvas!.style.pointerEvents = heroVisible ? "" : "none";

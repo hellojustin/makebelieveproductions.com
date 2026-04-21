@@ -21,7 +21,6 @@ const controlButtonSx = {
 };
 
 export default function HeroSection() {
-  const textRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<DotCanvasHandle>(null);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -43,7 +42,7 @@ export default function HeroSection() {
   return (
     <Box component="section" className={styles.heroSection}>
       <div className={styles.heroSpacer}>
-        <DotCanvas ref={canvasRef} className={styles.heroCanvas} textRef={textRef} />
+        <DotCanvas ref={canvasRef} className={styles.heroCanvas}/>
       </div>
 
       <div  className={styles.heroText}>
