@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import type { ImageToDotsResult } from "@/lib/image-to-dots";
+import { heroManifest } from "@/data/manifest";
 
 const STIFFNESS = 0.06;
 const DAMPING = 0.82;
@@ -14,10 +15,10 @@ const MORPH_SPEED = 0.12;      // exponential approach per frame — ~99% done i
 const OSC_AMPLITUDE = 2;               // px of gentle drift
 const OSC_PERIOD = 4000;               // ms for one full oscillation cycle
 
-const TEXT_EXCLUSION_PADDING_LEFT = 100; // px on left and right of text block
-const TEXT_EXCLUSION_PADDING_RIGHT = 100; // px on left and right of text block
-const TEXT_EXCLUSION_PADDING_TOP  = 64; // px above text block
-const TEXT_EXCLUSION_PADDING_BTM  = 200; // px below text block
+const TEXT_EXCLUSION_PADDING_LEFT = 20; // px on left and right of text block
+const TEXT_EXCLUSION_PADDING_RIGHT = 20; // px on left and right of text block
+const TEXT_EXCLUSION_PADDING_TOP  = 20; // px above text block
+const TEXT_EXCLUSION_PADDING_BTM  = 20; // px below text block
 
 // Color used for "muted" dots inside the text exclusion zone — slightly
 // lighter than the body background (#08051a) so the dots are still legible
@@ -68,11 +69,6 @@ interface DotCanvasProps {
   className?: string;
   style?: React.CSSProperties;
   textRef?: React.RefObject<HTMLDivElement | null>;
-}
-
-interface Manifest {
-  generatedAt: string;
-  images: string[];
 }
 
 interface ArcCurve {
@@ -178,15 +174,15 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
     let currentData: ImageToDotsResult | null = null;
     let preloadedData: ImageToDotsResult | null = null;
     let paused = false;
-    let imageFiles: string[] = [];
+    // The manifest is bundled at build time via scripts/process-images.ts,
+    // so the image list is available synchronously and can never fail with
+    // a runtime "Load failed". The hero JSONs themselves are still fetched
+    // lazily because they're large (~3MB each).
+    const imageFiles = heroManifest.images;
 
     function loadImage(index: number): Promise<ImageToDotsResult> {
       const filename = imageFiles[index];
       return fetch(`/data/${filename}`).then((r) => r.json());
-    }
-
-    function loadManifest(): Promise<Manifest> {
-      return fetch("/data/manifest.json").then((r) => r.json());
     }
 
     function buildDots(data: ImageToDotsResult, canvasW: number, canvasH: number) {
@@ -412,29 +408,26 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
     }
 
     // Boot: start animation immediately so the canvas is alive while the
-    // manifest + first image stream in, then begin cycling.
+    // first image streams in, then begin cycling.
     resize(null);
     animationId = requestAnimationFrame(tick);
 
-    loadManifest()
-      .then((manifest) => {
-        imageFiles = manifest.images ?? [];
-        if (imageFiles.length === 0) {
-          console.warn("[DotCanvas] manifest contained no images");
-          return;
-        }
-        return loadImage(0).then((data) => {
+    if (imageFiles.length === 0) {
+      console.warn("[DotCanvas] heroManifest contained no images");
+    } else {
+      loadImage(0)
+        .then((data) => {
           currentData = data;
           buildDots(data, canvas!.clientWidth, canvas!.clientHeight);
           preloadNext();
           if (imageFiles.length > 1) {
             cycleTimer = setInterval(cycleImage, CYCLE_INTERVAL);
           }
+        })
+        .catch((err) => {
+          console.error("[DotCanvas] failed to load first image", err);
         });
-      })
-      .catch((err) => {
-        console.error("[DotCanvas] failed to load manifest", err);
-      });
+    }
 
     // Mouse
     function onMouseMove(e: MouseEvent) {

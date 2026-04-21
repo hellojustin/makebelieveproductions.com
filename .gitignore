@@ -42,3 +42,4 @@ next-env.d.ts
 
 # generated dot data (built from content/hero/ via scripts/process-images.ts)
 /public/data/
+/src/data/manifest.ts

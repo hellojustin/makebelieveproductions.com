@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npm run process-images && next dev",
+    "dev:webpack": "npm run process-images && next dev --webpack",
     "build": "npm run process-images && next build",
     "start": "next start",
     "lint": "eslint",

@@ -46,7 +46,7 @@ export default function HeroSection() {
         <DotCanvas ref={canvasRef} className={styles.heroCanvas} textRef={textRef} />
       </div>
 
-      <div ref={textRef} className={styles.heroText}>
+      <div  className={styles.heroText}>
         <h1 className={styles.heroHeading}>
           MAKE BELIEVE
           <br />
