@@ -29,12 +29,57 @@ body {
   overscroll-behavior: none;
 }
 
-// Page-wide animated dot field. Fixed, full-viewport, sits ABOVE content
-// (z: 1) so the dot strip at the top of the viewport remains visible as
-// content scrolls underneath it. `pointer-events: none` means it never
-// intercepts taps/scrolls, so mobile gestures land on whatever section
-// is underneath. The DotCanvas component tracks pointer position on
-// `window` so cursor repulsion still works.
+// Outer wrapper for the page-wide animated dot field. iOS 26 Safari
+// clips `position: fixed` and `position: sticky` elements to the
+// "inner" viewport (excluding the area behind the translucent status
+// bar / dynamic island and bottom URL bar), which causes scrolled
+// content in normal flow to leak through behind the chrome. Apple uses
+// a workaround on apple.com that we mirror here: a small fixed wrapper
+// (height must be < 50vh) containing a sibling element with a CSS
+// background color. The combination tricks Safari into tinting the
+// translucent chrome with that sibling's bg color, so scrolled content
+// behind the chrome is masked instead of bleeding through.
+// See: https://discussions.apple.com/thread/256138682
+.dotCanvasShell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: block;
+  width: 100vw;
+  height: 48px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+// The bg color sibling that triggers the iOS 26 chrome-tinting
+// workaround. Apple's published example uses `height: 100vh` but we
+// found empirically that a small height also fires the tint while
+// avoiding the side effect of covering inner-viewport content. The
+// 60px is just "more than the dynamic island, less than anything we'd
+// want to occlude" — only the part overlapping iOS chrome is actually
+// visible, the rest sits behind the canvas. Color must match the page
+// bg (var(--mbp-color-bg)) so the chrome looks continuous with the
+// page background.
+.iosChromeBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: var(--mbp-color-bg);
+}
+
+// Page-wide animated dot field. Lives inside `.dotCanvasShell`, which
+// owns the fixed positioning and the iOS clipping workaround. The
+// canvas itself is an absolute-positioned block at the height of the
+// largest possible viewport (100vh), painted on top of `.iosChromeBg`
+// so the chrome-tinting bg is hidden in the inner viewport.
+//
+// `pointer-events: none` means it never intercepts taps/scrolls, so
+// mobile gestures land on whatever section is underneath. The DotCanvas
+// component tracks pointer position on `window` so cursor repulsion
+// still works.
 //
 // The DotCanvas itself decides which dots to render based on scroll
 // position — at rest the whole canvas is full of dots (acting as the
@@ -43,11 +88,12 @@ body {
 // is per-dot probabilistic, so the seam reads as "fewer dots" rather
 // than "fainter dots."
 .dotCanvasBackground {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100svh;
-  z-index: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100vh;
   pointer-events: none;
 }
 
