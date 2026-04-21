@@ -28,12 +28,10 @@ export default function ServicesSection() {
       component="section"
       sx={{
         position: "relative",
-        zIndex: 10,
-        background: "var(--mbp-color-bg)",
         width: "100%",
         py: 16,
         px: 4,
-        minHeight: "150vh",
+        height: "200vh",
       }}
     >
       <Box sx={{ maxWidth: "72rem", mx: "auto" }}>

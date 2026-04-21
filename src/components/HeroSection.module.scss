@@ -1,49 +1,26 @@
-// `svh` (small viewport height) is the height when ALL browser chrome is
-// visible — the worst-case visible area. It's still stable during scroll
-// (the value never changes), so we keep the original "constant proportions"
-// fix, while also guaranteeing the text + controls fit inside the visible
-// viewport on devices with both top and bottom chrome (mobile Safari).
-//
-// When chrome retracts, the canvas doesn't grow to fill the new space —
-// there's a small dark strip below it, but body background is the same
-// #08051a so it reads as continuous.
+// `svh` (small viewport height) keeps the section sized to the worst-case
+// visible area — the value never changes during scroll, so the layout stays
+// stable while iOS Safari's chrome retracts. The DotCanvas behind it is a
+// page-wide fixed background mounted in `page.tsx`, so this section just
+// reserves a viewport's worth of scroll room for the hero text.
+// z-index: 2 puts the hero text above the DotCanvas (z: 1), so the
+// heading reads cleanly over the dot field while the hero is in view.
 .heroSection {
   position: relative;
+  z-index: 2;
   width: 100%;
-  height: calc(100svh + 100px);
-  z-index: 100;
-}
-
-.heroSpacer {
-  height: calc(100svh + 100px);
-}
-
-.heroCanvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
   height: 100svh;
-  // Disables browser-managed touch gestures (scroll, pinch-zoom) on the
-  // canvas so dragging across it doesn't move the page. IconButton taps and
-  // our own touch listeners still fire.
-  touch-action: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 4rem;
 }
 
 .heroText {
-  position: absolute;
-  bottom: 8rem;
-  left: 0;
-  right: 0;
-  padding: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  // The canvas has `touch-action: none`, so the text block is the only
-  // place a user can scroll from on mobile. `pan-y` allows vertical scroll
-  // while still letting taps pass; text selection works as normal.
-  touch-action: pan-y;
 }
 
 $text-stroke-color: #08051a;
@@ -83,14 +60,4 @@ $text-stroke-color: #08051a;
   @media (min-width: 640px) {
     padding-right: 1rem;
   }
-}
-
-.controls {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  z-index: 100;
 }

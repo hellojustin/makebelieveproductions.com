@@ -15,6 +15,26 @@ const MORPH_SPEED = 0.12;      // exponential approach per frame — ~99% done i
 const OSC_AMPLITUDE = 2;               // px of gentle drift
 const OSC_PERIOD = 4000;               // ms for one full oscillation cycle
 
+// Persistent dot strip at the top of the viewport once the hero has been
+// scrolled past. Dots above STRIP_HEIGHT_PX always render; dots below
+// FADE_BAND_PX past that always drop; dots in the band drop probabilistically
+// (each dot's stable `roll` is compared against a falloff that ramps from 1
+// to 0 across the band). The strip's bottom edge slides up as the user
+// scrolls — at scroll=0 the cutoff is below the canvas (no dots dropped),
+// and by the time the page has scrolled one viewport-height the cutoff has
+// reached STRIP_HEIGHT_PX, leaving only the header band visible.
+const STRIP_HEIGHT_PX = 50;
+const FADE_BAND_PX = 5;
+
+// Page background color, drawn behind the dots so content scrolling under
+// the dot region dissolves to invisibility before it can show through the
+// gaps between sparse dots. Must match --mbp-color-bg in globals.scss.
+const BG_R = 8;
+const BG_G = 5;
+const BG_B = 26;
+const BG_OPAQUE = `rgb(${BG_R},${BG_G},${BG_B})`;
+const BG_TRANSPARENT = `rgba(${BG_R},${BG_G},${BG_B},0)`;
+
 interface DotState {
   homeX: number;
   homeY: number;
@@ -285,6 +305,27 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
       const h = canvas!.clientHeight;
       ctx!.clearRect(0, 0, w, h);
 
+      // Slide the fade region upward as the page scrolls. At scrollY=0 the
+      // fade starts at the canvas's bottom edge (so nothing is dropped); by
+      // the time the user has scrolled one full viewport, it's reached
+      // STRIP_HEIGHT_PX from the top. The canvas is fixed at the top of the
+      // viewport, so dot.homeY is in viewport coordinates.
+      const scrollProgress = Math.min(window.scrollY / h, 1);
+      const fadeStart = h - (h - STRIP_HEIGHT_PX) * scrollProgress;
+
+      // Cover content scrolling behind the dot region with the page bg:
+      // opaque above the fade band, fading to transparent across the band.
+      // Without this, content text would peek through the gaps between
+      // sparse dots and look muddy. The cover and the per-dot fade share
+      // fadeStart, so they always dissolve in lockstep.
+      ctx!.fillStyle = BG_OPAQUE;
+      ctx!.fillRect(0, 0, w, fadeStart);
+      const cover = ctx!.createLinearGradient(0, fadeStart, 0, fadeStart + FADE_BAND_PX);
+      cover.addColorStop(0, BG_OPAQUE);
+      cover.addColorStop(1, BG_TRANSPARENT);
+      ctx!.fillStyle = cover;
+      ctx!.fillRect(0, fadeStart, w, FADE_BAND_PX);
+
       const now = performance.now();
       for (const dot of dots) {
         // Morph toward target color and size (cascade: wait until morphAt)
@@ -313,13 +354,12 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
         dot.x += dot.vx;
         dot.y += dot.vy;
 
-        // Bottom fade: 100px band, reaches 0% at 10px before the content edge.
-        // HeroSection is calc(100svh + 100px), so services start 100px below
-        // the fold. Use canvas height (stable across iOS chrome collapse)
-        // rather than window.innerHeight (which jitters as chrome retracts).
-        const contentTopY = h + 100 - Math.min(window.scrollY, h);
-        if (dot.homeY > contentTopY - 100) {
-          const t = Math.min((dot.homeY - (contentTopY - 100)) / 90, 1);
+        // Probabilistic drop: dots above the fade band always render, dots
+        // past the band never render, dots inside the band render based on
+        // their stable per-dot roll vs. a linear keep-probability. This
+        // produces "fewer dots" rather than "fainter dots" through the seam.
+        if (dot.homeY > fadeStart) {
+          const t = Math.min((dot.homeY - fadeStart) / FADE_BAND_PX, 1);
           if (dot.roll > 1 - t) continue;
         }
 
@@ -357,75 +397,49 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
         });
     }
 
-    // Mouse
+    // Pointer tracking lives on `window` rather than the canvas itself so
+    // the canvas can stay `pointer-events: none` (it never intercepts taps,
+    // scrolls, or clicks meant for content below). Coordinates are raw
+    // viewport coords because the canvas is fixed and fills the viewport.
     function onMouseMove(e: MouseEvent) {
-      const rect = canvas!.getBoundingClientRect();
-      mouseX = e.clientX - rect.left;
-      mouseY = e.clientY - rect.top;
+      mouseX = e.clientX;
+      mouseY = e.clientY;
     }
-    function onMouseLeave() { mouseX = -9999; mouseY = -9999; }
+    function onPointerLeave() { mouseX = -9999; mouseY = -9999; }
 
-    // Touch
     function onTouchStart(e: TouchEvent) {
       const t = e.touches[0];
-      const rect = canvas!.getBoundingClientRect();
-      mouseX = t.clientX - rect.left;
-      mouseY = t.clientY - rect.top;
+      mouseX = t.clientX;
+      mouseY = t.clientY;
     }
     function onTouchMove(e: TouchEvent) {
       const t = e.touches[0];
-      const rect = canvas!.getBoundingClientRect();
-      mouseX = t.clientX - rect.left;
-      mouseY = t.clientY - rect.top;
+      mouseX = t.clientX;
+      mouseY = t.clientY;
     }
     function onTouchEnd() { mouseX = -9999; mouseY = -9999; }
     function onTouchCancel() { mouseX = -9999; mouseY = -9999; }
 
     function onResize() { resize(currentData); }
 
-    // The canvas is fixed and full-viewport with `touch-action: none`, so it
-    // would normally swallow every drag — including drags meant to scroll
-    // the services section below. Once the hero section has scrolled out of
-    // view, flip the canvas to `pointer-events: none` so input passes
-    // straight through to whatever is underneath. When the user scrolls
-    // back up to the hero, restore interactivity.
-    let canvasInteractive = true;
-    function updateCanvasInteractivity() {
-      const heroBox = canvas!.parentElement?.getBoundingClientRect();
-      const heroVisible = heroBox ? heroBox.bottom > 0 : true;
-      if (heroVisible !== canvasInteractive) {
-        canvasInteractive = heroVisible;
-        canvas!.style.pointerEvents = heroVisible ? "" : "none";
-        if (!heroVisible) {
-          // Park the repulsion target offscreen so dots don't react to a
-          // stale pointer position while the canvas is non-interactive.
-          mouseX = -9999;
-          mouseY = -9999;
-        }
-      }
-    }
-
-    canvas.addEventListener("mousemove", onMouseMove);
-    canvas.addEventListener("mouseleave", onMouseLeave);
-    canvas.addEventListener("touchstart", onTouchStart, { passive: true });
-    canvas.addEventListener("touchmove", onTouchMove, { passive: true });
-    canvas.addEventListener("touchend", onTouchEnd);
-    canvas.addEventListener("touchcancel", onTouchCancel);
+    window.addEventListener("mousemove", onMouseMove);
+    document.documentElement.addEventListener("mouseleave", onPointerLeave);
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd);
+    window.addEventListener("touchcancel", onTouchCancel);
     window.addEventListener("resize", onResize);
-    window.addEventListener("scroll", updateCanvasInteractivity, { passive: true });
-    updateCanvasInteractivity();
 
     return () => {
       cancelAnimationFrame(animationId);
       clearInterval(cycleTimer);
-      canvas.removeEventListener("mousemove", onMouseMove);
-      canvas.removeEventListener("mouseleave", onMouseLeave);
-      canvas.removeEventListener("touchstart", onTouchStart);
-      canvas.removeEventListener("touchmove", onTouchMove);
-      canvas.removeEventListener("touchend", onTouchEnd);
-      canvas.removeEventListener("touchcancel", onTouchCancel);
+      window.removeEventListener("mousemove", onMouseMove);
+      document.documentElement.removeEventListener("mouseleave", onPointerLeave);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchCancel);
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("scroll", updateCanvasInteractivity);
     };
   }, []);
 
