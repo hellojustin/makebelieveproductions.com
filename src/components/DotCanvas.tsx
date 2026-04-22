@@ -23,17 +23,16 @@ const OSC_PERIOD = 4000;               // ms for one full oscillation cycle
 // scrolls — at scroll=0 the cutoff is below the canvas (no dots dropped),
 // and by the time the page has scrolled one viewport-height the cutoff has
 // reached STRIP_HEIGHT_PX, leaving only the header band visible.
+//
+// Must stay in sync with .dotStripCover in globals.scss — the cover is the
+// CSS-rendered backdrop that masks scrolling content from showing through
+// gaps between sparse dots. We render it in CSS rather than in the canvas
+// because Chrome on wide-gamut displays applies subtly different color
+// management to canvas pixels vs CSS backgrounds, producing a visible band
+// where canvas-painted bg meets CSS-painted bg even when the source RGB
+// values are identical (Safari does not have this issue).
 const STRIP_HEIGHT_PX = 55;
 const FADE_BAND_PX = 15;
-
-// Page background color, drawn behind the dots so content scrolling under
-// the dot region dissolves to invisibility before it can show through the
-// gaps between sparse dots. Must match --mbp-color-bg in globals.scss.
-const BG_R = 8;
-const BG_G = 5;
-const BG_B = 26;
-const BG_OPAQUE = `rgb(${BG_R},${BG_G},${BG_B})`;
-const BG_TRANSPARENT = `rgba(${BG_R},${BG_G},${BG_B},0)`;
 
 interface DotState {
   homeX: number;
@@ -313,18 +312,14 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
       const scrollProgress = Math.min(window.scrollY / h, 1);
       const fadeStart = h - (h - STRIP_HEIGHT_PX) * scrollProgress;
 
-      // Cover content scrolling behind the dot region with the page bg:
-      // opaque above the fade band, fading to transparent across the band.
-      // Without this, content text would peek through the gaps between
-      // sparse dots and look muddy. The cover and the per-dot fade share
-      // fadeStart, so they always dissolve in lockstep.
-      ctx!.fillStyle = BG_OPAQUE;
-      ctx!.fillRect(0, 0, w, fadeStart);
-      const cover = ctx!.createLinearGradient(0, fadeStart, 0, fadeStart + FADE_BAND_PX);
-      cover.addColorStop(0, BG_OPAQUE);
-      cover.addColorStop(1, BG_TRANSPARENT);
-      ctx!.fillStyle = cover;
-      ctx!.fillRect(0, fadeStart, w, FADE_BAND_PX);
+      // Drive the CSS-rendered cover (.dotStripCover) so its bg-color stop
+      // moves with the dot fade. Setting the variable on the document root
+      // is cheap; the gradient repaints only when the value actually
+      // changes, which is at most once per frame here.
+      document.documentElement.style.setProperty(
+        "--mbp-dot-cover-stop",
+        `${fadeStart}px`,
+      );
 
       const now = performance.now();
       for (const dot of dots) {

@@ -17,6 +17,10 @@ html {
   // Disables both axes: kills horizontal scroll-chaining and the iOS Safari
   // top/bottom rubber-band so users can't pull the page into negative space.
   overscroll-behavior: none;
+  // Paint the page bg at the root so any layer ordering / specificity quirk
+  // between body, main, contentStack, and footer can't expose a seam — the
+  // bg shows through any transparent gap in the descendants.
+  background: var(--mbp-color-bg);
 }
 
 body {
@@ -74,7 +78,8 @@ body {
 // owns the fixed positioning and the iOS clipping workaround. The
 // canvas itself is an absolute-positioned block at the height of the
 // largest possible viewport (100vh), painted on top of `.iosChromeBg`
-// so the chrome-tinting bg is hidden in the inner viewport.
+// and `.dotStripCover` so the chrome-tinting bg is hidden in the
+// inner viewport and the dots sit on top of the cover gradient.
 //
 // `pointer-events: none` means it never intercepts taps/scrolls, so
 // mobile gestures land on whatever section is underneath. The DotCanvas
@@ -83,10 +88,10 @@ body {
 //
 // The DotCanvas itself decides which dots to render based on scroll
 // position — at rest the whole canvas is full of dots (acting as the
-// hero backdrop); once scrolled past the hero only a ~100px band at
-// the top of the viewport renders dots. There's no CSS mask: the fade
-// is per-dot probabilistic, so the seam reads as "fewer dots" rather
-// than "fainter dots."
+// hero backdrop); once scrolled past the hero only a ~70px band at
+// the top of the viewport renders dots. The fade is per-dot
+// probabilistic, so the seam reads as "fewer dots" rather than
+// "fainter dots."
 .dotCanvasBackground {
   position: absolute;
   top: 0;
@@ -95,6 +100,37 @@ body {
   width: 100%;
   height: 100svh;
   pointer-events: none;
+}
+
+// CSS-rendered cover that masks page content scrolling behind the dot
+// region. Without it, text and other content would peek through the
+// gaps between sparse dots and look muddy. The gradient stops match
+// the per-dot probabilistic fade in DotCanvas: solid bg above the
+// strip, fading to transparent across the 15px band, transparent
+// below. The stop position is driven by DotCanvas via the
+// --mbp-dot-cover-stop custom property, which slides from the bottom
+// of the canvas (no masking, full hero backdrop) up to STRIP_HEIGHT_PX
+// (just the persistent top strip) as the user scrolls past the hero.
+//
+// This is rendered in CSS rather than inside the canvas because Chrome
+// on wide-gamut displays applies subtly different color management to
+// canvas-painted pixels vs. CSS backgrounds of the same RGB value,
+// producing a visible horizontal band where the two meet (Safari
+// doesn't have this issue). Painting via CSS keeps the bg in the same
+// color pipeline as every other surface on the page.
+.dotStripCover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100svh;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--mbp-color-bg) 0,
+    var(--mbp-color-bg) var(--mbp-dot-cover-stop, 100svh),
+    transparent calc(var(--mbp-dot-cover-stop, 100svh) + 15px)
+  );
 }
 
 // Wrapper for every section that follows the hero. Owns the solid page
@@ -138,9 +174,9 @@ body {
 }
 
 
-.footer {
-  background: var(--mbp-color-bg);
-}
+// .footer {
+//   background: var(--mbp-color-bg);
+// }
 
 .footerContent {
   margin: 0 auto;

@@ -18,6 +18,15 @@ export default function Home() {
           See globals.scss for full details. */}
       <div className="dotCanvasShell">
         <div className="iosChromeBg" aria-hidden />
+        {/* CSS-rendered cover that masks scrolling content behind the dot
+            strip. Sits below the canvas in source order so dots paint on
+            top. Its gradient stop is driven from DotCanvas via the
+            --mbp-dot-cover-stop custom property. Painting the bg here in
+            CSS instead of inside the canvas avoids a Chrome wide-gamut
+            color-management mismatch where canvas-painted pixels and
+            CSS-painted backgrounds of the same RGB value render as
+            slightly different on-screen colors. */}
+        <div className="dotStripCover" aria-hidden />
         <DotCanvas className="dotCanvasBackground" />
       </div>
 
