@@ -26,9 +26,9 @@ export default function Home() {
       {/* All post-hero sections go inside this wrapper. The wrapper carries
           the gradient transition that lets the dot field show through the
           top of the page during the seam between hero and content. */}
-      <div className="contentStack">
+      <Box className="contentStack">
         <ServicesSection />
-      </div>
+      </Box>
     </Box>
   );
 }

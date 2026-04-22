@@ -105,3 +105,14 @@ body {
   position: relative;
   background: var(--mbp-color-bg);
 }
+
+.contentSection {
+  margin: 0 auto;
+  padding: 2rem;
+  max-width: 100rem;
+}
+
+.contentSectionHeader {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
