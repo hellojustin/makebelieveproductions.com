@@ -1,7 +1,7 @@
 // Global styles. Joy UI's CssBaseline handles most resets — this file
 // owns site-wide tokens, layout primitives, and the dark backdrop.
 
-$color-bg: #08051a;
+$color-bg: rgb(10, 8, 26);
 $color-fg: #ededed;
 $color-violet-300: #c4b5fd;
 
@@ -21,6 +21,7 @@ html {
   // between body, main, contentStack, and footer can't expose a seam — the
   // bg shows through any transparent gap in the descendants.
   background: var(--mbp-color-bg);
+  scroll-behavior: smooth;
 }
 
 body {

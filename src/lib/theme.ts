@@ -18,7 +18,7 @@ const theme = extendTheme({
     dark: {
       palette: {
         background: {
-          body: "#08051a",
+          body: "#0A081a",
           surface: "#0d0a24",
           level1: "#13102e",
           level2: "#1a1638",
