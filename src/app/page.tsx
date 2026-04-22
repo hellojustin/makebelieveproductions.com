@@ -3,6 +3,7 @@ import Nav from "@/components/Nav";
 import HeroSection from "@/components/HeroSection";
 import IntroSection from "@/components/IntroSection";
 import ServicesSection from "@/components/ServicesSection";
+import ClientsSection from "@/components/ClientsSection";
 import DotCanvas from "@/components/DotCanvas";
 
 export default function Home() {
@@ -39,6 +40,7 @@ export default function Home() {
       <Box className="contentStack">
         <IntroSection />
         <ServicesSection />
+        <ClientsSection />
       </Box>
     </Box>
   );
