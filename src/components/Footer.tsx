@@ -1,8 +1,8 @@
-import { Sheet, Stack, Typography } from "@mui/joy";
+import { Box, Stack, Typography } from "@mui/joy";
 
 export default function Footer() {
   return (
-    <Sheet className="footer">
+    <Box component="footer" className="footer">
       <Stack
         className="footerContent"
         direction="column"
@@ -18,6 +18,6 @@ export default function Footer() {
           &copy; {new Date().getFullYear()} Make Believe Productions, LLC. All Rights Reserved.
         </Typography>
       </Stack>
-    </Sheet>
+    </Box>
   );
 }
