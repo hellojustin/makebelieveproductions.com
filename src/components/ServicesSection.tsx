@@ -1,11 +1,24 @@
 "use client";
 
-import { Box, Button, Card, Divider, Grid, List, ListItem, Typography } from "@mui/joy";
+import {
+  Box, 
+  Button, 
+  Card, 
+  Divider, 
+  Grid, 
+  List, 
+  ListItem, 
+  ListItemDecorator, 
+  Stack, 
+  Typography
+} from "@mui/joy";
+import CheckIcon from "@mui/icons-material/Check";
+import StatCard from "./layout/StatCard";
 
 
 export default function ServicesSection() {
   return (
-    <Box component="section" className="contentSection">
+    <Box component="section" className="contentSection fullHeight">
       <Box component="header" className="contentSectionHeader">
         <Typography level="h2" component="h2">Our Services</Typography>
       </Box>
@@ -17,43 +30,33 @@ export default function ServicesSection() {
               Product Definition
             </Typography>
               
-            <Typography level="body-lg">
+            <Typography level="body-lg" sx={{minHeight: 90}}>
               We build a deep understanding of your vision, help you identify a minimum lovable product, 
               and forge a plan to bring it to life.
             </Typography>
               
-            <Divider inset="none" sx={{'--Divider-childPosition':'1rem'}}>
-              Structure
-            </Divider>
+            <Stack direction="row" spacing={2} sx={{justifyContent: 'space-between', alignItems: 'center'}}>
+              <StatCard value='2-4' label='weeks' />
+              <StatCard value='4-8' label='hours/week' />
+              <StatCard value='$4,000' label='total' />
+            </Stack>
               
-            <List>
-              <ListItem>
-                2-4 weeks
-              </ListItem>
-              <ListItem>
-                4-8 hours per week
-              </ListItem>
-              <ListItem>
-                $4,000 total
-              </ListItem>
-            </List>
-              
-            <Divider inset="none" sx={{'--Divider-childPosition':'1rem'}}>
+            <Divider inset="none" sx={{'--Divider-childPosition':'1rem', mt: 2}}>
               Includes
             </Divider>
               
-            <List>
+            <List sx={{minHeight: 200}}>
               <ListItem>
-                Product wireframes
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>Product wireframes
               </ListItem>
               <ListItem>
-                Revenue and cost analysis
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>Revenue and cost analysis
               </ListItem>
               <ListItem>
-                Preliminary development plan & timeline
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>Preliminary development plan & timeline
               </ListItem>
               <ListItem>
-                De-risking of technical challenges
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>De-risking of technical challenges
               </ListItem>
             </List>
 
@@ -68,42 +71,32 @@ export default function ServicesSection() {
             <Typography level="title-lg">
               Initial Build
             </Typography>
-            <Typography level="body-lg">
+            <Typography level="body-lg" sx={{minHeight: 90}}>
               We work closely with your founding team to bring your product to market.
             </Typography>
 
-            <Divider inset="none" sx={{'--Divider-childPosition':'1rem'}}>
-              Structure
-            </Divider>
-            
-            <List>
-              <ListItem>
-                2-3 months, depending on product complexity
-              </ListItem>
-              <ListItem>
-                3 days per week
-              </ListItem>
-              <ListItem>
-                $19,500 per month
-              </ListItem>
-            </List>
+            <Stack direction="row" spacing={2} sx={{justifyContent: 'space-between', alignItems: 'center'}}>
+              <StatCard value='2-3' label='months' />
+              <StatCard value='3' label='days/week' />
+              <StatCard value='$19,500' label='per month' />
+            </Stack>
 
-            <Divider inset="none" sx={{'--Divider-childPosition':'1rem'}}>
+            <Divider inset="none" sx={{'--Divider-childPosition': '1rem', mt: 2}}>
               Includes
             </Divider>
 
-            <List>
+            <List sx={{minHeight: 200}}>
               <ListItem>
-                High-craft product running in production
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>High-craft product running in production
               </ListItem>
               <ListItem>
-                Essential analytics to understand user behavior
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>Essential analytics to understand user behavior
               </ListItem>
               <ListItem>
-                Solid foundation for future development
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>Solid foundation for future development
               </ListItem>
               <ListItem>
-                Clear roadmap for next steps
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>Clear roadmap for next steps
               </ListItem>
             </List>
 
@@ -118,45 +111,35 @@ export default function ServicesSection() {
             <Typography level="title-lg">
               Scaling Support
             </Typography>
-            <Typography level="body-lg">
+            <Typography level="body-lg" sx={{minHeight: 90}}>
               We embed with your team to tackle daunting challenges that come with scale.
             </Typography>
 
-            <Divider inset="none" sx={{'--Divider-childPosition':'1rem'}}>
-              Structure
-            </Divider>
-            
-            <List>
-              <ListItem>
-                3-9 months; varies with scope of work
-              </ListItem>
-              <ListItem>
-                1-3 days per week
-              </ListItem>
-              <ListItem>
-                Starting at $6,500 per month
-              </ListItem>
-            </List>
+            <Stack direction="row" spacing={2} sx={{justifyContent: 'space-between', alignItems: 'center'}}>
+              <StatCard value='6+' label='months' />
+              <StatCard value='1-3' label='days/week' />
+              <StatCard value='$6,500+' label='per month' />
+            </Stack>
 
-            <Divider inset="none" sx={{'--Divider-childPosition':'1rem'}}>
+            <Divider inset="none" sx={{'--Divider-childPosition':'1rem', mt: 2}}>
               Includes
             </Divider>
 
-            <List>
+            <List sx={{minHeight: 200}}>
               <ListItem>
-                System performance improvements
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>System performance improvements
               </ListItem>
               <ListItem>
-                Architectural transitions
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>Architectural transitions
               </ListItem>
               <ListItem>
-                Technical debt paydown
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>Technical debt paydown
               </ListItem>
               <ListItem>
-                Solving operational edge-cases
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>Solving operational edge-cases
               </ListItem>
               <ListItem>
-                Development tooling & process improvement
+                <ListItemDecorator><CheckIcon /></ListItemDecorator>Development tooling & process improvement
               </ListItem>
             </List>
 

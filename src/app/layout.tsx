@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import ThemeRegistry from "@/components/ThemeRegistry";
+import Footer from "@/components/Footer";
 import "./globals.scss";
 
 const geistSans = Geist({
@@ -30,7 +31,10 @@ export default function RootLayout({
       data-mbp-color-scheme="dark"
     >
       <body>
-        <ThemeRegistry>{children}</ThemeRegistry>
+        <ThemeRegistry>
+          {children}
+          <Footer/>
+        </ThemeRegistry>
       </body>
     </html>
   );

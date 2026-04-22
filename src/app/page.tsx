@@ -1,6 +1,7 @@
 import Box from "@mui/joy/Box";
 import Nav from "@/components/Nav";
 import HeroSection from "@/components/HeroSection";
+import IntroSection from "@/components/IntroSection";
 import ServicesSection from "@/components/ServicesSection";
 import DotCanvas from "@/components/DotCanvas";
 
@@ -27,6 +28,7 @@ export default function Home() {
           the gradient transition that lets the dot field show through the
           top of the page during the seam between hero and content. */}
       <Box className="contentStack">
+        <IntroSection />
         <ServicesSection />
       </Box>
     </Box>

@@ -108,11 +108,75 @@ body {
 
 .contentSection {
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 0.5rem;
   max-width: 100rem;
+
+  @media (min-width: 640px) {
+    padding: 2rem 1rem;
+  }
+
+  @media (min-width: 768px) {
+    padding: 2rem 2rem;
+  }
+  
+  &.noHeader {
+    padding-top: 8rem;
+  }
+
+  &.halfHeight {
+    min-height: 50svh;
+  }
+
+  &.fullHeight {
+    min-height: 100svh;
+  }
 }
 
 .contentSectionHeader {
   margin-top: 2rem;
   margin-bottom: 2rem;
+}
+
+
+// .footer {
+
+// }
+
+.footerContent {
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  max-width: 100rem;
+  min-height: 12rem;
+
+  @media (min-width: 640px) {
+    padding: 2rem 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    padding: 2rem 2rem;
+  }
+}
+
+.wordmark {
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  color: #ffffff;
+  line-height: 1.1;
+  text-transform: uppercase;
+  margin: 0;
+
+  @media (min-width: 640px) {
+    // font-size: 3rem;
+  }
+
+  @media (min-width: 768px) {
+    // font-size: 4.5rem;
+  }
+}
+
+.address {
+  font-size: 0.8rem;
+  line-height: 1.1;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
 }
