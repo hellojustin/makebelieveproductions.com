@@ -16,6 +16,13 @@ import CheckIcon from "@mui/icons-material/Check";
 import StatCard from "./layout/StatCard";
 import SectionHeader from "./layout/SectionHeader";
 
+type CardPalette = { bg: string; fg: string };
+
+const cardPalettes = {
+  productDefinition: { bg: "rgba(253, 224, 71, 0.08)", fg: "#fde68a" },
+  buildAndLaunch:    { bg: "rgba(134, 239, 172, 0.08)", fg: "#a7f3d0" },
+  scalingSupport:    { bg: "rgba(252, 165, 165, 0.08)", fg: "#fecaca" },
+} as const satisfies Record<string, CardPalette>;
 
 export default function ServicesSection() {
   return (
@@ -38,12 +45,20 @@ export default function ServicesSection() {
         <Grid container spacing={4}>
           
           <Grid xs={12} md={6} xl={4}>
-            <Card variant="plain">
-              <Typography level="title-lg">
+            <Card
+              variant="plain"
+              sx={{
+                bgcolor: cardPalettes.productDefinition.bg,
+                color: cardPalettes.productDefinition.fg,
+                borderRadius: '1.5rem',
+                height: '100%',
+              }}
+            >
+              <Typography level="title-lg" sx={{color: cardPalettes.productDefinition.fg}}>
                 Product Definition
               </Typography>
                 
-              <Typography level="body-lg" sx={{minHeight: 90}}>
+              <Typography level="body-lg" sx={{color: cardPalettes.productDefinition.fg, minHeight: 90}}>
                 We build a deep understanding of your vision, help you identify a minimum lovable product, 
                 and forge a plan to bring it to life.
               </Typography>
@@ -54,33 +69,41 @@ export default function ServicesSection() {
                 <StatCard value='$4,000' label='total' />
               </Stack>
                 
-              <Divider inset="none" sx={{'--Divider-childPosition':'1rem', mt: 2}}>
+              <Divider inset="none" sx={{'--Divider-childPosition':'1rem', mt: 2, color: cardPalettes.productDefinition.fg}}>
                 Includes
               </Divider>
                 
-              <List sx={{minHeight: 200}}>
+              <List sx={{minHeight: 200, color: cardPalettes.productDefinition.fg}}>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>Product wireframes
+                  <ListItemDecorator sx={{color: cardPalettes.productDefinition.fg}}><CheckIcon /></ListItemDecorator>Product wireframes
                 </ListItem>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>Revenue and cost analysis
+                  <ListItemDecorator sx={{color: cardPalettes.productDefinition.fg}}><CheckIcon /></ListItemDecorator>Revenue and cost analysis
                 </ListItem>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>Preliminary development plan & timeline
+                  <ListItemDecorator sx={{color: cardPalettes.productDefinition.fg}}><CheckIcon /></ListItemDecorator>Preliminary development plan & timeline
                 </ListItem>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>De-risking of technical challenges
+                  <ListItemDecorator sx={{color: cardPalettes.productDefinition.fg}}><CheckIcon /></ListItemDecorator>De-risking of technical challenges
                 </ListItem>
               </List>
             </Card>
           </Grid>
 
           <Grid xs={12} md={6} xl={4}>
-            <Card variant="plain">
-              <Typography level="title-lg">
+            <Card
+              variant="plain"
+              sx={{
+                bgcolor: cardPalettes.buildAndLaunch.bg,
+                color: cardPalettes.buildAndLaunch.fg,
+                borderRadius: '1.5rem',
+                height: '100%',
+              }}
+            >
+              <Typography level="title-lg" sx={{color: cardPalettes.buildAndLaunch.fg}}>
                 Build &amp; Launch
               </Typography>
-              <Typography level="body-lg" sx={{minHeight: 90}}>
+              <Typography level="body-lg" sx={{color: cardPalettes.buildAndLaunch.fg, minHeight: 90}}>
                 We work closely with your founding team to bring your product to market.
               </Typography>
 
@@ -90,33 +113,41 @@ export default function ServicesSection() {
                 <StatCard value='$19,500' label='per month' />
               </Stack>
 
-              <Divider inset="none" sx={{'--Divider-childPosition': '1rem', mt: 2}}>
+              <Divider inset="none" sx={{'--Divider-childPosition': '1rem', mt: 2, color: cardPalettes.buildAndLaunch.fg}}>
                 Includes
               </Divider>
 
-              <List sx={{minHeight: 200}}>
+              <List sx={{minHeight: 200, color: cardPalettes.buildAndLaunch.fg}}>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>High-craft product running in production
+                  <ListItemDecorator sx={{color: cardPalettes.buildAndLaunch.fg}}><CheckIcon /></ListItemDecorator>High-craft product running in production
                 </ListItem>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>Essential analytics to understand user behavior
+                  <ListItemDecorator sx={{color: cardPalettes.buildAndLaunch.fg}}><CheckIcon /></ListItemDecorator>Essential analytics to understand user behavior
                 </ListItem>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>Solid foundation for future development
+                  <ListItemDecorator sx={{color: cardPalettes.buildAndLaunch.fg}}><CheckIcon /></ListItemDecorator>Solid foundation for future development
                 </ListItem>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>Clear roadmap for next steps
+                  <ListItemDecorator sx={{color: cardPalettes.buildAndLaunch.fg}}><CheckIcon /></ListItemDecorator>Clear roadmap for next steps
                 </ListItem>
               </List>
             </Card>
           </Grid>
           
           <Grid xs={12} md={6} xl={4}>
-            <Card variant="plain">
-              <Typography level="title-lg">
+            <Card
+              variant="plain"
+              sx={{
+                bgcolor: cardPalettes.scalingSupport.bg,
+                color: cardPalettes.scalingSupport.fg,
+                borderRadius: '1.5rem',
+                height: '100%',
+              }}
+            >
+              <Typography level="title-lg" sx={{color: cardPalettes.scalingSupport.fg}}>
                 Scaling Support
               </Typography>
-              <Typography level="body-lg" sx={{minHeight: 90}}>
+              <Typography level="body-lg" sx={{color: cardPalettes.scalingSupport.fg, minHeight: 90}}>
                 We embed with your team to tackle daunting challenges that come with scale.
               </Typography>
 
@@ -126,25 +157,25 @@ export default function ServicesSection() {
                 <StatCard value='$6,500+' label='per month' />
               </Stack>
 
-              <Divider inset="none" sx={{'--Divider-childPosition':'1rem', mt: 2}}>
+              <Divider inset="none" sx={{'--Divider-childPosition':'1rem', mt: 2, color: cardPalettes.scalingSupport.fg}}>
                 Includes
               </Divider>
 
-              <List sx={{minHeight: 200}}>
+              <List sx={{minHeight: 200, color: cardPalettes.scalingSupport.fg}}>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>System performance improvements
+                  <ListItemDecorator sx={{color: cardPalettes.scalingSupport.fg}}><CheckIcon /></ListItemDecorator>System performance improvements
                 </ListItem>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>Architectural transitions
+                  <ListItemDecorator sx={{color: cardPalettes.scalingSupport.fg}}><CheckIcon /></ListItemDecorator>Architectural transitions
                 </ListItem>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>Technical debt paydown
+                  <ListItemDecorator sx={{color: cardPalettes.scalingSupport.fg}}><CheckIcon /></ListItemDecorator>Technical debt paydown
                 </ListItem>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>Solving operational edge-cases
+                  <ListItemDecorator sx={{color: cardPalettes.scalingSupport.fg}}><CheckIcon /></ListItemDecorator>Solving operational edge-cases
                 </ListItem>
                 <ListItem>
-                  <ListItemDecorator><CheckIcon /></ListItemDecorator>Development tooling & process improvement
+                  <ListItemDecorator sx={{color: cardPalettes.scalingSupport.fg}}><CheckIcon /></ListItemDecorator>Development tooling & process improvement
                 </ListItem>
               </List>
             </Card>
@@ -160,7 +191,11 @@ export default function ServicesSection() {
               px: 6,
               py: 2,
               borderRadius: '3rem',
-              fontSize: '1.5rem'
+              fontSize: '1.5rem',
+              bgcolor: 'var(--mbp-palette-primary-outlinedBorder)',
+              '&:hover': {
+                bgcolor: 'var(--mbp-palette-primary-600)',
+              },
             }}
             component='a'
             target='_blank'

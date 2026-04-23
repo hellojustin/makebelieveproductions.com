@@ -23,6 +23,7 @@ export default function StatCard({value, label}: StatCardProps) {
         fontWeight={700}
         fontSize={{xs: '1.6rem', sm:'1.8rem', lg: '2rem'}}
         lineHeight='normal'
+        sx={{color: 'inherit'}}
       >
         {value}
       </Typography>
@@ -30,6 +31,7 @@ export default function StatCard({value, label}: StatCardProps) {
         component='div'
         fontSize={{xs: '0.8rem', sm:'0.9rem', lg: '1rem'}}
         lineHeight='normal'
+        sx={{color: 'inherit'}}
       >
         {label}
       </Typography>
