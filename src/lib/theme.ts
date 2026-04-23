@@ -11,8 +11,26 @@ const theme = extendTheme({
   cssVarPrefix: "mbp",
   fontFamily: {
     body: "var(--font-geist-sans), system-ui, -apple-system, sans-serif",
-    display: "var(--font-geist-sans), system-ui, -apple-system, sans-serif",
+    // `display` is intentionally a serif while `body` stays sans — Section
+    // headers and Card titles use display to read as Fraunces italic, while
+    // the rest of the site keeps Geist for body copy. See typography below.
+    display: "var(--font-fraunces), 'Fraunces', Georgia, serif",
     code: "var(--font-geist-mono), ui-monospace, monospace",
+  },
+  // Override only the levels we use as headers (Section + Card titles) so
+  // they pick up the display family and render italic. Other levels (body-*,
+  // h1, h2, h4, title-md/sm) are untouched and keep Joy's defaults.
+  typography: {
+    h3: {
+      fontFamily: "var(--mbp-fontFamily-display)",
+      fontStyle: "italic",
+      fontWeight: 400,
+    },
+    "title-lg": {
+      fontFamily: "var(--mbp-fontFamily-display)",
+      fontStyle: "italic",
+      fontWeight: 400,
+    },
   },
   colorSchemes: {
     dark: {

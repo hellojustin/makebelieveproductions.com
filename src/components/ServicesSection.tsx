@@ -16,13 +16,33 @@ import CheckIcon from "@mui/icons-material/Check";
 import StatCard from "./layout/StatCard";
 import SectionHeader from "./layout/SectionHeader";
 
-type CardPalette = { bg: string; fg: string };
+type CardPalette = { bg: string; fg: string; glow: string };
 
+// `glow` mirrors `fg` at low alpha — used as a soft outer halo on the card
+// (see boxShadow below) so each card reads as gently lit in its own hue,
+// echoing the per-word halos on the IntroSection statement above it.
 const cardPalettes = {
-  productDefinition: { bg: "rgba(253, 224, 71, 0.08)", fg: "#fde68a" },
-  buildAndLaunch:    { bg: "rgba(134, 239, 172, 0.08)", fg: "#a7f3d0" },
-  scalingSupport:    { bg: "rgba(252, 165, 165, 0.08)", fg: "#fecaca" },
+  productDefinition: {
+    bg:   "rgba(253, 224, 71, 0.08)",
+    fg:   "#fde68a",
+    glow: "rgba(253, 230, 138, 0.18)",
+  },
+  buildAndLaunch: {
+    bg:   "rgba(134, 239, 172, 0.08)",
+    fg:   "#a7f3d0",
+    glow: "rgba(167, 243, 208, 0.18)",
+  },
+  scalingSupport: {
+    bg:   "rgba(252, 165, 165, 0.08)",
+    fg:   "#fecaca",
+    glow: "rgba(254, 202, 202, 0.18)",
+  },
 } as const satisfies Record<string, CardPalette>;
+
+// Two-layer soft glow: a wide outer halo (48px) for atmosphere and a tight
+// inner ring (12px) for edge definition. Applied to each Card via boxShadow.
+const cardGlow = (color: string) =>
+  `0 0 36px ${color}, 0 0 8px ${color}`;
 
 export default function ServicesSection() {
   return (
@@ -52,16 +72,19 @@ export default function ServicesSection() {
                 color: cardPalettes.productDefinition.fg,
                 borderRadius: '1.5rem',
                 height: '100%',
+                boxShadow: cardGlow(cardPalettes.productDefinition.glow),
               }}
             >
-              <Typography level="title-lg" sx={{color: cardPalettes.productDefinition.fg}}>
-                Product Definition
-              </Typography>
-                
-              <Typography level="body-lg" sx={{color: cardPalettes.productDefinition.fg, minHeight: 90}}>
-                We build a deep understanding of your vision, help you identify a minimum lovable product, 
-                and forge a plan to bring it to life.
-              </Typography>
+              <Box p={2} pb={0}>
+                <Typography level="title-lg" fontSize={'1.5rem'} sx={{color: cardPalettes.productDefinition.fg, mb: 2}}>
+                  Product Definition
+                </Typography>
+                  
+                <Typography level="body-lg" sx={{color: cardPalettes.productDefinition.fg, minHeight: 90}}>
+                  We build a deep understanding of your vision, help you identify a minimum lovable product, 
+                  and forge a plan to bring it to life.
+                </Typography>
+              </Box>
                 
               <Stack direction="row" spacing={2} sx={{justifyContent: 'space-between', alignItems: 'center'}}>
                 <StatCard value='2-4' label='weeks' />
@@ -98,14 +121,17 @@ export default function ServicesSection() {
                 color: cardPalettes.buildAndLaunch.fg,
                 borderRadius: '1.5rem',
                 height: '100%',
+                boxShadow: cardGlow(cardPalettes.buildAndLaunch.glow),
               }}
             >
-              <Typography level="title-lg" sx={{color: cardPalettes.buildAndLaunch.fg}}>
-                Build &amp; Launch
-              </Typography>
-              <Typography level="body-lg" sx={{color: cardPalettes.buildAndLaunch.fg, minHeight: 90}}>
-                We work closely with your founding team to bring your product to market.
-              </Typography>
+              <Box p={2} pb={0}>
+                <Typography level="title-lg" fontSize={'1.5rem'} sx={{color: cardPalettes.buildAndLaunch.fg, mb: 2}}>
+                  Build &amp; Launch
+                </Typography>
+                <Typography level="body-lg" sx={{color: cardPalettes.buildAndLaunch.fg, minHeight: 90}}>
+                  We work closely with your founding team to bring your product to market.
+                </Typography>
+              </Box>
 
               <Stack direction="row" spacing={2} sx={{justifyContent: 'space-between', alignItems: 'center'}}>
                 <StatCard value='2-3' label='months' />
@@ -142,14 +168,17 @@ export default function ServicesSection() {
                 color: cardPalettes.scalingSupport.fg,
                 borderRadius: '1.5rem',
                 height: '100%',
+                boxShadow: cardGlow(cardPalettes.scalingSupport.glow),
               }}
             >
-              <Typography level="title-lg" sx={{color: cardPalettes.scalingSupport.fg}}>
-                Scaling Support
-              </Typography>
-              <Typography level="body-lg" sx={{color: cardPalettes.scalingSupport.fg, minHeight: 90}}>
-                We embed with your team to tackle daunting challenges that come with scale.
-              </Typography>
+              <Box p={2} pb={0}>
+                <Typography level="title-lg" fontSize={'1.5rem'} sx={{color: cardPalettes.scalingSupport.fg, mb: 2}}>
+                  Scaling Support
+                </Typography>
+                <Typography level="body-lg" sx={{color: cardPalettes.scalingSupport.fg, minHeight: 90}}>
+                  We embed with your team to tackle daunting challenges that come with scale.
+                </Typography>
+              </Box>
 
               <Stack direction="row" spacing={2} sx={{justifyContent: 'space-between', alignItems: 'center'}}>
                 <StatCard value='6+' label='months' />
@@ -193,8 +222,16 @@ export default function ServicesSection() {
               borderRadius: '3rem',
               fontSize: '1.5rem',
               bgcolor: 'var(--mbp-palette-primary-outlinedBorder)',
+              // Violet halo using primary-400 (#a78bfa) — alpha matched to
+              // the per-card glows above (0.18) so the button reads as part
+              // of the same lit-from-within family rather than competing.
+              boxShadow: `0 0 48px rgba(167, 139, 250, 0.18), 0 0 12px rgba(167, 139, 250, 0.18)`,
+              transform: 'translateY(0)',
+              transition: 'box-shadow 280ms ease, background-color 280ms ease, transform 280ms ease',
               '&:hover': {
                 bgcolor: 'var(--mbp-palette-primary-600)',
+                boxShadow: `0 0 64px rgba(167, 139, 250, 0.3), 0 0 16px rgba(167, 139, 250, 0.3)`,
+                transform: 'translateY(-3px)',
               },
             }}
             component='a'
