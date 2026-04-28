@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import NextLink from "next/link";
 import Box from "@mui/joy/Box";
 import Link from "@mui/joy/Link";
 import Typography from "@mui/joy/Typography";
@@ -12,10 +13,22 @@ import Typography from "@mui/joy/Typography";
 // visual overlap. Tweak as needed.
 const NAV_REVEAL_SCROLL_FRACTION = 0.9;
 
-export default function Nav() {
-  const [visible, setVisible] = useState(false);
+interface NavProps {
+  /**
+   * If true, the nav is always visible (skips the scroll-fade-in
+   * behavior used on the homepage). Used on /blog and /blog/[slug]
+   * where there is no full-viewport hero blocking the nav strip.
+   */
+  alwaysVisible?: boolean;
+}
+
+export default function Nav({ alwaysVisible = false }: NavProps) {
+  const [visible, setVisible] = useState(alwaysVisible);
 
   useEffect(() => {
+    // When alwaysVisible the initial state is already `true`; skip the
+    // scroll listener entirely so we don't churn renders on scroll.
+    if (alwaysVisible) return;
     const update = () => {
       setVisible(window.scrollY > window.innerHeight * NAV_REVEAL_SCROLL_FRACTION);
     };
@@ -26,7 +39,7 @@ export default function Nav() {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, []);
+  }, [alwaysVisible]);
 
   return (
     <Box
@@ -50,29 +63,57 @@ export default function Nav() {
       }}
       aria-hidden={!visible}
     >
-      <Typography
-        level="body-sm"
+      <Link
+        component={NextLink}
+        href="/"
+        underline="none"
         sx={{
           color: "common.white",
           fontWeight: 300,
           letterSpacing: "0.15em",
+          fontSize: "0.875rem",
         }}
       >
-        MAKE BELIEVE
-      </Typography>
-      <Link
-        href="mailto:justin@makebelieveproductions.com"
-        underline="none"
-        sx={{
-          fontSize: "sm",
-          letterSpacing: "0.05em",
-          color: "rgba(196, 181, 253, 0.7)",
-          "&:hover": { color: "var(--mbp-color-violet-300)" },
-          transition: "color 200ms",
-        }}
-      >
-        Get in touch →
+        <Typography
+          level="body-sm"
+          sx={{
+            color: "common.white",
+            fontWeight: 300,
+            letterSpacing: "0.15em",
+          }}
+        >
+          MAKE BELIEVE
+        </Typography>
       </Link>
+      <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 3, md: 5 } }}>
+        <Link
+          component={NextLink}
+          href="/blog"
+          underline="none"
+          sx={{
+            fontSize: "sm",
+            letterSpacing: "0.05em",
+            color: "rgba(196, 181, 253, 0.7)",
+            "&:hover": { color: "var(--mbp-color-violet-300)" },
+            transition: "color 200ms",
+          }}
+        >
+          Writing
+        </Link>
+        <Link
+          href="mailto:justin@makebelieveproductions.com"
+          underline="none"
+          sx={{
+            fontSize: "sm",
+            letterSpacing: "0.05em",
+            color: "rgba(196, 181, 253, 0.7)",
+            "&:hover": { color: "var(--mbp-color-violet-300)" },
+            transition: "color 200ms",
+          }}
+        >
+          Get in touch →
+        </Link>
+      </Box>
     </Box>
   );
 }

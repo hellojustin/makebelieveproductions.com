@@ -77,10 +77,10 @@ body {
 
 // Page-wide animated dot field. Lives inside `.dotCanvasShell`, which
 // owns the fixed positioning and the iOS clipping workaround. The
-// canvas itself is an absolute-positioned block at the height of the
-// largest possible viewport (100vh), painted on top of `.iosChromeBg`
-// and `.dotStripCover` so the chrome-tinting bg is hidden in the
-// inner viewport and the dots sit on top of the cover gradient.
+// canvas itself is an absolute-positioned block; its height is driven
+// by the `--mbp-dot-canvas-height` custom property (set on
+// `.dotCanvasShell` by the React wrapper), defaulting to 100svh for the
+// homepage hero. Blog post heroes set it to 50svh.
 //
 // `pointer-events: none` means it never intercepts taps/scrolls, so
 // mobile gestures land on whatever section is underneath. The DotCanvas
@@ -99,7 +99,7 @@ body {
   left: 0;
   display: block;
   width: 100%;
-  height: 100svh;
+  height: var(--mbp-dot-canvas-height, 100svh);
   pointer-events: none;
 }
 
@@ -124,7 +124,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 100svh;
+  height: var(--mbp-dot-canvas-height, 100svh);
   pointer-events: none;
   background: linear-gradient(
     to bottom,

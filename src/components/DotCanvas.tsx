@@ -21,7 +21,7 @@ const OSC_PERIOD = 4000;               // ms for one full oscillation cycle
 // (each dot's stable `roll` is compared against a falloff that ramps from 1
 // to 0 across the band). The strip's bottom edge slides up as the user
 // scrolls — at scroll=0 the cutoff is below the canvas (no dots dropped),
-// and by the time the page has scrolled one viewport-height the cutoff has
+// and by the time the page has scrolled one canvas-height the cutoff has
 // reached STRIP_HEIGHT_PX, leaving only the header band visible.
 //
 // Must stay in sync with .dotStripCover in globals.scss — the cover is the
@@ -72,9 +72,23 @@ export interface DotCanvasHandle {
   isPaused: () => boolean;
 }
 
+/**
+ * Where the canvas should pull its dot data from.
+ *
+ * - `cycling` (default) — the homepage behavior. Cycles through
+ *   `heroManifest.images` on a timer with a cascade morph between images.
+ * - `single` — a single fixed image. Used by the blog post hero so each
+ *   post owns its own static dot field. No cycle timer is started.
+ */
+export type DotCanvasDataSource =
+  | { kind: "cycling" }
+  | { kind: "single"; url: string };
+
 interface DotCanvasProps {
   className?: string;
   style?: React.CSSProperties;
+  /** Defaults to `{ kind: "cycling" }` for backward compat with the homepage. */
+  dataSource?: DotCanvasDataSource;
 }
 
 interface ArcCurve {
@@ -151,7 +165,7 @@ function closestOnArc(
 }
 
 const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
-  function DotCanvas({ className, style }, ref) {
+  function DotCanvas({ className, style, dataSource = { kind: "cycling" } }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controlsRef = useRef<DotCanvasHandle>({
     pause() {}, play() {}, next() {}, prev() {}, isPaused() { return false; },
@@ -180,15 +194,23 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
     let currentData: ImageToDotsResult | null = null;
     let preloadedData: ImageToDotsResult | null = null;
     let paused = false;
-    // The manifest is bundled at build time via scripts/process-images.ts,
+    // The manifest is bundled at build time via scripts/process-content.ts,
     // so the image list is available synchronously and can never fail with
     // a runtime "Load failed". The hero JSONs themselves are still fetched
     // lazily because they're large (~3MB each).
-    const imageFiles = heroManifest.images;
+    const cyclingFiles = dataSource.kind === "cycling" ? heroManifest.images : [];
+    const isSingle = dataSource.kind === "single";
 
-    function loadImage(index: number): Promise<ImageToDotsResult> {
-      const filename = imageFiles[index];
+    function loadCyclingImage(index: number): Promise<ImageToDotsResult> {
+      const filename = cyclingFiles[index];
       return fetch(`/data/${filename}`).then((r) => r.json());
+    }
+
+    function loadSingleImage(): Promise<ImageToDotsResult> {
+      if (dataSource.kind !== "single") {
+        return Promise.reject(new Error("not in single mode"));
+      }
+      return fetch(dataSource.url).then((r) => r.json());
     }
 
     function buildDots(data: ImageToDotsResult, canvasW: number, canvasH: number) {
@@ -251,24 +273,24 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
     }
 
     function preloadNext() {
-      if (imageFiles.length < 2) return;
-      const nextIndex = (currentImageIndex + 1) % imageFiles.length;
-      loadImage(nextIndex).then((data) => {
+      if (cyclingFiles.length < 2) return;
+      const nextIndex = (currentImageIndex + 1) % cyclingFiles.length;
+      loadCyclingImage(nextIndex).then((data) => {
         preloadedData = data;
       });
     }
 
     function cycleImage() {
-      if (paused || !preloadedData || dots.length === 0 || imageFiles.length < 2) return;
-      currentImageIndex = (currentImageIndex + 1) % imageFiles.length;
+      if (paused || !preloadedData || dots.length === 0 || cyclingFiles.length < 2) return;
+      currentImageIndex = (currentImageIndex + 1) % cyclingFiles.length;
       applyTransition(preloadedData, canvas!.clientWidth, canvas!.clientHeight);
       preloadedData = null;
       preloadNext();
     }
 
     function goToImage(index: number) {
-      if (dots.length === 0 || imageFiles.length === 0) return;
-      loadImage(index).then((data) => {
+      if (dots.length === 0 || cyclingFiles.length === 0) return;
+      loadCyclingImage(index).then((data) => {
         currentImageIndex = index;
         applyTransition(data, canvas!.clientWidth, canvas!.clientHeight);
         preloadedData = null;
@@ -278,7 +300,7 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
 
     function resetTimer() {
       clearInterval(cycleTimer);
-      if (imageFiles.length > 1) {
+      if (cyclingFiles.length > 1) {
         cycleTimer = setInterval(cycleImage, CYCLE_INTERVAL);
       }
     }
@@ -288,13 +310,13 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
       play()  { paused = false; resetTimer(); },
       isPaused() { return paused; },
       next() {
-        if (imageFiles.length === 0) return;
-        goToImage((currentImageIndex + 1) % imageFiles.length);
+        if (cyclingFiles.length === 0) return;
+        goToImage((currentImageIndex + 1) % cyclingFiles.length);
         if (!paused) resetTimer();
       },
       prev() {
-        if (imageFiles.length === 0) return;
-        goToImage((currentImageIndex - 1 + imageFiles.length) % imageFiles.length);
+        if (cyclingFiles.length === 0) return;
+        goToImage((currentImageIndex - 1 + cyclingFiles.length) % cyclingFiles.length);
         if (!paused) resetTimer();
       },
     };
@@ -306,9 +328,13 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
 
       // Slide the fade region upward as the page scrolls. At scrollY=0 the
       // fade starts at the canvas's bottom edge (so nothing is dropped); by
-      // the time the user has scrolled one full viewport, it's reached
+      // the time the user has scrolled one full canvas height, it's reached
       // STRIP_HEIGHT_PX from the top. The canvas is fixed at the top of the
-      // viewport, so dot.homeY is in viewport coordinates.
+      // viewport, so dot.homeY is in viewport coordinates. Using `h`
+      // (canvas height) as the denominator means a 50svh hero compresses
+      // to the strip after scrolling 50% of the viewport, while a 100svh
+      // hero takes a full viewport — which preserves the visual rhythm
+      // between hero size and strip-fade onset.
       const scrollProgress = Math.min(window.scrollY / h, 1);
       const fadeStart = h - (h - STRIP_HEIGHT_PX) * scrollProgress;
 
@@ -371,19 +397,28 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
     }
 
     // Boot: start animation immediately so the canvas is alive while the
-    // first image streams in, then begin cycling.
+    // first image streams in, then begin cycling (cycling mode only).
     resize(null);
     animationId = requestAnimationFrame(tick);
 
-    if (imageFiles.length === 0) {
+    if (isSingle) {
+      loadSingleImage()
+        .then((data) => {
+          currentData = data;
+          buildDots(data, canvas!.clientWidth, canvas!.clientHeight);
+        })
+        .catch((err) => {
+          console.error("[DotCanvas] failed to load single image", err);
+        });
+    } else if (cyclingFiles.length === 0) {
       console.warn("[DotCanvas] heroManifest contained no images");
     } else {
-      loadImage(0)
+      loadCyclingImage(0)
         .then((data) => {
           currentData = data;
           buildDots(data, canvas!.clientWidth, canvas!.clientHeight);
           preloadNext();
-          if (imageFiles.length > 1) {
+          if (cyclingFiles.length > 1) {
             cycleTimer = setInterval(cycleImage, CYCLE_INTERVAL);
           }
         })
@@ -436,6 +471,10 @@ const DotCanvas = forwardRef<DotCanvasHandle, DotCanvasProps>(
       window.removeEventListener("touchcancel", onTouchCancel);
       window.removeEventListener("resize", onResize);
     };
+    // dataSource is intentionally not in the dep array — the host component
+    // is expected to remount the canvas if it switches data source. This
+    // keeps the effect's setup/teardown cost predictable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <canvas ref={canvasRef} className={className} style={style} />;
