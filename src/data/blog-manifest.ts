@@ -31,7 +31,7 @@ export interface BlogManifest {
 }
 
 export const blogManifest: BlogManifest = {
-  generatedAt: "2026-04-29T06:31:07.748Z",
+  generatedAt: "2026-04-29T18:30:41.435Z",
   posts: [
   {
     "slug": "craft-at-speed",
@@ -50,10 +50,10 @@ export const blogManifest: BlogManifest = {
     "dotsPath": "/data/blog/craft-at-speed.json",
     "ogImagePath": "/og/blog/craft-at-speed.png",
     "squareImagePath": "/og/blog/craft-at-speed.square.png",
-    "readingTimeMinutes": 3,
+    "readingTimeMinutes": 5,
     "canonical": null,
     "draft": false,
-    "sourceMtime": "2026-04-29T06:22:17.957Z"
+    "sourceMtime": "2026-04-29T18:30:28.760Z"
   }
 ],
 };

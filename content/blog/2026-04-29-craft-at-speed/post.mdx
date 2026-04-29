@@ -13,41 +13,29 @@ tags:
 draft: false
 ---
 
-For the past eighteen months I've worked on two or more substantial products at any given time — a video interviewing platform, a CRM analysis tool, an audio knowledge-graph app, a fintech payments and reconciliation system. Working on them with agentic tools has taught me two things:
+Hi friends - today we’re open-sourcing the first of many Cursor/Claude skills that have allowed us to deliver high-craft engineering, at sustainable speed, with agents writing ~98% of the code.
 
-1. Codebases still accumulate problems faster than they get fixed; agents accelerate that.
-1. And the hygiene practices that help humans write good code help agents even more.
+**[Skillz-and-thrillz](https://github.com/make-believe-productions/skillz-and-thrillz)** — build fast, stay tidy.
 
-This is the first of a few posts on what I've found works. We're opening with the toolkit itself.
+This first drop contains our codebase hygiene skills. Eighteen months of juggling two or more systems simultaneously in venture environments have taught us:
+1. Products still rot from the inside; AI agents speed that up too.
+1. The same practices that help humans write great systems, help agents _even more_.
 
-> **[skillz-and-thrillz](https://github.com/make-believe-productions/skillz-and-thrillz)** — a collection of Cursor skills for keeping codebases clean as you build with agents.
+That’s why we’re releasing our hygiene skills first. These skills help agents look after:
+- Adherence to 12-factor principles
+- Dead code
+- Outdated dependencies
+- Documentation drift
+- Secrets and artifacts slipping past `.gitignore`
+- Language/framework idioms
+- Long files
+- Abandoned `TODO` comments
+- Untested code, of course
 
-The rest of this post is the thinking behind it.
+The skills are designed to run in two passes: analysis and action. Analysis skills inform your agent of opportunities to improve codebase hygiene. Action skills apply changes, checking in with you first before taking big swings. On large changes, the skills trigger automatically and spawn sub-agents to parallelize work. We’ve also designed them to run in a deliberate sequence to minimize re-work.We’ve also made the skills extensible to any language. Skills themselves are language-agnostic, and reference language specific modules that cover idioms, commands, etc in a sibling directory. Out of the box, we include modules for nodejs, ruby, python, dart, swift, kotlin, go, rust, java, elixir, php, and .NET.
 
-## Week One vs Week Twelve
+As much as well love Anthropic’s skill architecture, we expect that skills like these won’t be the way engineers steer agents long-term. More structural, deterministic approaches will emerge to offer better task-level and philosophical guidance to agents. Until then, engineering teams are left to wrestle with the effects of context window sizes, context summarization, and lost-in-the-middle problems dirtying up their systems. These skills make agents clean up after themselves.
 
-The first week of an agentic project moves fast. A prompt becomes a working feature in minutes. The codebase grows visibly each day, and the work feels like a different category of effort than it used to be.
+Stay tuned for more!
 
-By around week twelve, that pace stalls. Features the agent would normally finish in one pass start taking three. Components have grown to several hundred lines because the agent kept building where it could see. Dependencies were swapped in but never removed. The documentation describes a system that no longer exists. The tests cover only the obvious paths.
-
-Some of this is a limitation of the tools. Even ~1M tokens of context isn't enough to hold a whole codebase, let alone a multi-repo distributed system. When the context is full, the [lost-in-the-middle problem](https://cs.stanford.edu/~nfliu/papers/lost-in-the-middle.arxiv2023.pdf) means details established across many turns get dropped. Context summarization makes this worse, and there are [reports](https://www.reddit.com/r/ClaudeAI/comments/1shkq5y/opus_46_extended_thinking_not_thinking_anymore/) that the models themselves are spending less time thinking than they used to.
-
-But mostly it's a craft problem. Good teams have always had practices that sustain quality as the surface area grows. Agents need them more, not less.
-
-## Why it matters
-
-Each piece of uncertainty adds drag. When you're not sure what's tested, you don't refactor. When you're not sure what's used, you don't delete. When the documentation describes an old architecture, the agent reinvents things you've already built.
-
-The point of building this way is to be able to take on more — the feature that seemed too ambitious, the refactor that's been on the list for months. That's only possible when the codebase isn't fighting you.
-
-## What we do
-
-We treat codebase hygiene like any other part of the work — a continuous practice, not a periodic chore. After any substantial change, we check for the things that tend to accumulate: dead code, overgrown files, gaps in test coverage, stale dependencies, documentation that's drifted from reality. When something needs attention, we handle it before moving on.
-
-We've automated most of this into a set of Cursor skills — small, composable instructions that teach the agent to clean up after itself. They run diagnostics, classify what they find by urgency and confidence, and apply fixes in an order designed to avoid wasted work. If the agent is good enough to create the mess, it's good enough to clean it up.
-
-Over time, the codebase stays navigable. The agent finds and uses existing patterns instead of inventing new ones. Tests catch regressions early. Dependencies stay current. The documentation describes the system you actually have.
-
----
-
-The skills are opinionated — they reflect how we think about code quality and what we've found works at the pace we operate. Your team may use them differently, adapt them, or disagree with some of the choices. That's fine. The skills themselves matter less than the idea behind them: hygiene and speed aren't separate disciplines. At this pace, they're the same one.
+-Justin
