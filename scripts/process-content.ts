@@ -32,6 +32,7 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import readingTime from "reading-time";
+import sharp from "sharp";
 import { imageToDots } from "../src/lib/image-to-dots";
 import { dotsToPng } from "../src/lib/dots-to-png";
 
@@ -62,13 +63,50 @@ const HERO_OPTIONS = {
   darknessThreshold: 0,
 };
 
-// 50svh post hero — half the homepage hero's height. We keep the same
-// gridSpacing so the dot density visually matches.
-const BLOG_HERO_DIMS = { width: 1920, height: 540, gridSpacing: 8 };
+// On-screen post hero. Sized per-image (see deriveHeroDims): the grid
+// matches the source image's aspect ratio so the entire image survives
+// into the dot data, leaving any cropping to the canvas at display time
+// (driven by the actual viewport aspect, not by an arbitrary build-time
+// choice). BLOG_HERO_TARGET_DOTS is the dot budget the derivation tries
+// to hit — currently 2× the count of the original fixed 1920×540 / 8²
+// grid, for a noticeably denser field than the homepage; pair with
+// BLOG_HERO_MAX_SIZE_FRACTION to make individual dots correspondingly
+// smaller so the field reads as higher-resolution rather than crowded.
+//
+// Note: BLOG_HERO_GRID_SPACING is just a coordinate-scale constant for
+// the emitted JSON; the canvas resolves it back out at render time
+// (on-screen dot spacing = canvas_display_width / cols, independent of
+// gridSpacing). Density is controlled solely by TARGET_DOTS.
+const BLOG_HERO_GRID_SPACING = 8;
+const BLOG_HERO_TARGET_DOTS = (1920 / 8) * (540 / 8) * 2;
+// Override imageToDots' default maxSizeFraction (0.6) for the on-screen
+// blog hero. 0.48 = 80% of default → ~20% smaller maximum dot radius,
+// so the post hero reads finer than the homepage hero without spilling
+// past the per-cell boundary.
+const BLOG_HERO_MAX_SIZE_FRACTION = 0.48;
 // Standard OG image aspect for Twitter/Facebook/LinkedIn previews.
 const BLOG_OG_DIMS = { width: 1200, height: 630, gridSpacing: 6 };
 // Square thumbnail used on the blog index card.
 const BLOG_SQUARE_DIMS = { width: 800, height: 800, gridSpacing: 6 };
+
+/**
+ * Pick on-screen hero canvas dimensions whose aspect matches the source
+ * image, while spending roughly the same number of dots as the previous
+ * fixed-size grid. Width and height are snapped to multiples of
+ * `gridSpacing` so the grid stays regular.
+ */
+function deriveHeroDims(
+  imageWidth: number,
+  imageHeight: number,
+): { width: number; height: number; gridSpacing: number } {
+  const aspect = imageWidth / imageHeight;
+  const gs = BLOG_HERO_GRID_SPACING;
+  // Solve for column/row counts that hit the dot budget at the image's
+  // aspect: cols/rows = aspect, cols*rows = budget.
+  const rows = Math.max(1, Math.round(Math.sqrt(BLOG_HERO_TARGET_DOTS / aspect)));
+  const cols = Math.max(1, Math.round(rows * aspect));
+  return { width: cols * gs, height: rows * gs, gridSpacing: gs };
+}
 
 interface BlogManifestEntry {
   slug: string;
@@ -303,10 +341,24 @@ async function processBlogPipeline(): Promise<void> {
       process.stdout.write(`[blog]   process ${post.slug}... `);
       const buf = fs.readFileSync(post.heroPath);
 
+      // Read the source's actual dimensions so the on-screen hero grid
+      // can match its aspect ratio. Without this, sharp's `cover` fit
+      // inside imageToDots would discard image content (top + bottom of
+      // a portrait-leaning image, sides of a panorama) before the canvas
+      // ever got to make a layout decision.
+      const meta = await sharp(buf).metadata();
+      if (!meta.width || !meta.height) {
+        throw new Error(
+          `[blog] ${post.slug}: hero image is missing width/height metadata`,
+        );
+      }
+      const heroDims = deriveHeroDims(meta.width, meta.height);
+
       const heroDots = await imageToDots(buf, {
-        gridSpacing: BLOG_HERO_DIMS.gridSpacing,
-        canvasWidth: BLOG_HERO_DIMS.width,
-        canvasHeight: BLOG_HERO_DIMS.height,
+        gridSpacing: heroDims.gridSpacing,
+        canvasWidth: heroDims.width,
+        canvasHeight: heroDims.height,
+        maxSizeFraction: BLOG_HERO_MAX_SIZE_FRACTION,
         darknessThreshold: 0,
       });
       fs.writeFileSync(dotsPath, JSON.stringify(heroDots));

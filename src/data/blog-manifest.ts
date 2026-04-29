@@ -31,27 +31,29 @@ export interface BlogManifest {
 }
 
 export const blogManifest: BlogManifest = {
-  generatedAt: "2026-04-29T00:03:40.307Z",
+  generatedAt: "2026-04-29T06:31:07.748Z",
   posts: [
   {
-    "slug": "hello-world",
-    "folder": "2026-04-28-hello-world",
-    "title": "Hello, world",
-    "date": "2026-04-28T00:00:00.000Z",
-    "description": "Notes on a new corner of the site — what we're going to write about, and why.",
-    "author": "Justin Paulin",
+    "slug": "craft-at-speed",
+    "folder": "2026-04-29-craft-at-speed",
+    "title": "Craft at Speed",
+    "date": "2026-04-29T00:00:00.000Z",
+    "description": "Open-sourcing the agent skills we use to keep codebases clean.",
+    "author": "Justin Molineaux",
     "tags": [
-      "notes",
-      "process"
+      "craft",
+      "ai",
+      "process",
+      "open-source"
     ],
-    "heroAlt": "Aerial photograph of a coastline",
-    "dotsPath": "/data/blog/hello-world.json",
-    "ogImagePath": "/og/blog/hello-world.png",
-    "squareImagePath": "/og/blog/hello-world.square.png",
-    "readingTimeMinutes": 1,
+    "heroAlt": "Dot image of a craftsperson swinging a hammer, sparks scattering into ribbons of color against a deep blue ground",
+    "dotsPath": "/data/blog/craft-at-speed.json",
+    "ogImagePath": "/og/blog/craft-at-speed.png",
+    "squareImagePath": "/og/blog/craft-at-speed.square.png",
+    "readingTimeMinutes": 3,
     "canonical": null,
     "draft": false,
-    "sourceMtime": "2026-04-28T22:07:19.116Z"
+    "sourceMtime": "2026-04-29T06:22:17.957Z"
   }
 ],
 };

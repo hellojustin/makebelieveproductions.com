@@ -8,6 +8,19 @@ interface PostHeroProps {
 }
 
 /**
+ * Visible height of the blog post hero, expressed in `svh` units per
+ * Joy breakpoint. Imported by both this component (which reserves the
+ * scroll room for the title overlay) and the page (which sizes the
+ * fixed dot canvas via `DotCanvasShell`). Keep them in sync — they're
+ * a layout pair, not two independent knobs.
+ */
+export const BLOG_HERO_HEIGHT_SVH = { xs: 50, lg: 75 } as const;
+
+const BLOG_HERO_HEIGHT_SX = Object.fromEntries(
+  Object.entries(BLOG_HERO_HEIGHT_SVH).map(([bp, v]) => [bp, `${v}svh`]),
+);
+
+/**
  * Title overlay rendered above the page-wide animated dot field.
  *
  * Important: this component does NOT mount the `DotCanvasShell` itself.
@@ -18,10 +31,10 @@ interface PostHeroProps {
  * stack below positioned descendants with explicit z-index — see the
  * commit that introduced this hero for the gory details.
  *
- * This section is sized to 50svh and the title is anchored to the
- * bottom of it so it reads against the canvas's lower band, where the
- * dots are typically darker (since dot size is luminance-driven and
- * hero photos tend to put their subject up top).
+ * The section's height matches BLOG_HERO_HEIGHT_SVH so the title is
+ * anchored to the bottom edge of the visible canvas (where the dots
+ * are typically darker, since dot size is luminance-driven and hero
+ * photos tend to put their subject up top).
  */
 export default function PostHero({
   title,
@@ -33,10 +46,10 @@ export default function PostHero({
       component="section"
       sx={{
         position: "relative",
-        // Reserves a half-viewport's worth of scroll room for the title
-        // overlay; the actual dot canvas is mounted at the page level
-        // (DotCanvasShell) and is fixed to the top of the viewport.
-        height: "50svh",
+        // Reserves the same vertical room the dot canvas takes (see
+        // BLOG_HERO_HEIGHT_SVH). The canvas itself is fixed-positioned
+        // and mounted at the page level via DotCanvasShell.
+        height: BLOG_HERO_HEIGHT_SX,
         zIndex: 2,
         display: "flex",
         flexDirection: "column",

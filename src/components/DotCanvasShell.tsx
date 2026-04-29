@@ -1,18 +1,41 @@
+import { Box } from "@mui/joy";
 import DotCanvas, { type DotCanvasDataSource } from "./DotCanvas";
+
+/**
+ * A height value in `svh` units, optionally varying across Joy breakpoints
+ * (xs / sm / md / lg / xl). A bare number applies at every breakpoint;
+ * the object form uses Joy's normal mobile-first cascade — each
+ * breakpoint inherits the value below it until overridden.
+ */
+export type ResponsiveHeightSvh = number | Partial<Record<"xs" | "sm" | "md" | "lg" | "xl", number>>;
 
 interface DotCanvasShellProps {
   /**
    * Visible canvas height in `svh` units (small-viewport-height — the
    * worst-case visible area, stable through iOS chrome retraction).
-   * Defaults to 100 for the homepage hero. Blog post heroes pass 50.
+   * Defaults to 100 for the homepage hero. Blog post heroes pass a
+   * responsive map (see BLOG_HERO_HEIGHT_SVH in PostHero.tsx).
    */
-  heightSvh?: number;
+  heightSvh?: ResponsiveHeightSvh;
   /**
    * Where the canvas should pull its dot data from. Defaults to the
    * cycling homepage manifest for backwards compatibility with the
    * original homepage usage.
    */
   dataSource?: DotCanvasDataSource;
+}
+
+/**
+ * Convert a `ResponsiveHeightSvh` into the value shape Joy's sx system
+ * expects when assigning a CSS custom property — either a string for the
+ * simple case, or a breakpoint-keyed object of strings that Joy compiles
+ * into media queries.
+ */
+function toCssVarValue(h: ResponsiveHeightSvh): string | Record<string, string> {
+  if (typeof h === "number") return `${h}svh`;
+  return Object.fromEntries(
+    Object.entries(h).map(([bp, v]) => [bp, `${v}svh`]),
+  );
 }
 
 /**
@@ -32,17 +55,14 @@ export default function DotCanvasShell({
   heightSvh = 100,
   dataSource,
 }: DotCanvasShellProps) {
+  // Skip emitting the custom property when it would just match the
+  // CSS default (100svh) — this keeps the CSS rule's fallback
+  // authoritative for the homepage and avoids a needless inline style.
+  const isDefault = typeof heightSvh === "number" && heightSvh === 100;
   return (
-    <div
+    <Box
       className="dotCanvasShell"
-      style={
-        // Only set the var when not the default — keeps the CSS rule's
-        // fallback (100svh) authoritative for the homepage and avoids
-        // a needless inline style.
-        heightSvh === 100
-          ? undefined
-          : ({ ["--mbp-dot-canvas-height" as string]: `${heightSvh}svh` } as React.CSSProperties)
-      }
+      sx={isDefault ? undefined : { "--mbp-dot-canvas-height": toCssVarValue(heightSvh) }}
     >
       {/* Sibling whose CSS background tints the iOS Safari chrome.
           See globals.scss for the full explanation. */}
@@ -52,6 +72,6 @@ export default function DotCanvasShell({
           from DotCanvas via the --mbp-dot-cover-stop custom property. */}
       <div className="dotStripCover" aria-hidden />
       <DotCanvas className="dotCanvasBackground" dataSource={dataSource} />
-    </div>
+    </Box>
   );
 }

@@ -101,7 +101,9 @@ export default function Nav({ alwaysVisible = false }: NavProps) {
           Writing
         </Link>
         <Link
-          href="mailto:justin@makebelieveproductions.com"
+          href="https://calendly.com/justin-makebelieveproductions/30min"
+          target="_blank"
+          rel="noopener"
           underline="none"
           sx={{
             fontSize: "sm",

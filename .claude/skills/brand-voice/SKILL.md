@@ -9,9 +9,7 @@ This skill defines how Make Believe Productions sounds in writing. Read it befor
 
 ## Who we are
 
-A thoughtful studio that cares about craft. We use modern AI tools to build high-quality software at high speed. We're not interested in shortcuts — we're interested in doing ambitious, carefully-made work, faster than anyone expects.
-
-We want the things we build to feel magical. Not magical in a hand-wavy way — magical in the way that things feel when every detail has been considered and the seams don't show.
+A studio that uses modern AI tools to build high-quality software at high speed. We care about craft — we want every detail to have been considered.
 
 ## Voice principles
 
@@ -30,7 +28,7 @@ Right: "The question is whether you have a practice for picking them up."
 We share what we've learned, not what others should do. We describe our approach and let the reader decide if it's useful. We never talk down to the audience — they're peers, often founders and technical leaders who have their own hard-won perspectives.
 
 Wrong: "You need to treat hygiene as a continuous practice."
-Right: "We treat codebase hygiene the way we treat any other aspect of craft — as a continuous practice, not a periodic chore."
+Right: "We treat codebase hygiene as a continuous practice, not a periodic chore."
 
 ### Generous, not possessive
 
@@ -64,7 +62,7 @@ Example of rhythm:
 
 **Dashes for asides.** Use em dashes to add context or qualification mid-sentence. This keeps the main thought moving while adding nuance. "We treat codebase hygiene the way we treat any other aspect of craft — as a continuous practice, not a periodic chore."
 
-**No exclamation marks.** Confidence doesn't shout.
+**No exclamation marks.**
 
 **No emoji in long-form writing.** Social posts can use them sparingly if the platform expects it, but blog posts and documentation never.
 
@@ -75,7 +73,7 @@ Example of rhythm:
 Wrong opening: "Codebase hygiene is essential for fast-moving teams."
 Right opening: "We've been thinking a lot about what happens to a codebase when you build quickly with AI."
 
-**Thesis at the end, not the beginning.** The most resonant line in a piece should be the last one, or close to it. Build toward it. "The important thing isn't the specific implementation. It's the idea that hygiene and speed aren't in tension. They're the same practice."
+**Thesis at the end, not the beginning.** Build toward the central idea rather than opening with it. The reader should arrive at the conclusion alongside us, not be handed it up front.
 
 **Minimal headers.** Use section breaks when the topic genuinely shifts, not as formatting decoration. A 400-word post needs two or three headers at most.
 
@@ -92,4 +90,4 @@ Right opening: "We've been thinking a lot about what happens to a codebase when 
 
 ## The feeling we want to leave
 
-After reading something we've written, the reader should feel like they just had a quiet, thoughtful conversation with someone who knows their craft deeply, genuinely enjoys sharing it, and isn't trying to sell them anything.
+After reading something we've written, the reader should feel like they just had a thoughtful conversation with someone who knows their craft and isn't trying to sell them anything.

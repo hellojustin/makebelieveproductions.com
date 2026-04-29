@@ -7,7 +7,7 @@ import rehypePrettyCode from "rehype-pretty-code";
 
 import Nav from "@/components/Nav";
 import DotCanvasShell from "@/components/DotCanvasShell";
-import PostHero from "@/components/blog/PostHero";
+import PostHero, { BLOG_HERO_HEIGHT_SVH } from "@/components/blog/PostHero";
 import PostHeader from "@/components/blog/PostHeader";
 import { mdxComponents } from "@/components/blog/MdxComponents";
 import { getPostBySlug, getPublishedPosts } from "@/lib/blog";
@@ -133,7 +133,7 @@ export default async function PostPage({ params }: PageProps) {
           descendants with explicit z-index — see PostHero.tsx for the
           full note. */}
       <DotCanvasShell
-        heightSvh={50}
+        heightSvh={BLOG_HERO_HEIGHT_SVH}
         dataSource={{ kind: "single", url: post.dotsPath }}
       />
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Fraunces } from "next/font/google";
 import ThemeRegistry from "@/components/ThemeRegistry";
 import Footer from "@/components/Footer";
+import Analytics from "@/components/Analytics";
 import {
   SITE_AUTHOR,
   SITE_LOCALE,
@@ -88,6 +89,7 @@ export default function RootLayout({
           {children}
           <Footer/>
         </ThemeRegistry>
+        <Analytics />
       </body>
     </html>
   );
