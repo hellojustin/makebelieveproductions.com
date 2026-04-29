@@ -32,7 +32,9 @@ That’s why we’re releasing our hygiene skills first. These skills help agent
 - Abandoned `TODO` comments
 - Untested code, of course
 
-The skills are designed to run in two passes: analysis and action. Analysis skills inform your agent of opportunities to improve codebase hygiene. Action skills apply changes, checking in with you first before taking big swings. On large changes, the skills trigger automatically and spawn sub-agents to parallelize work. We’ve also designed them to run in a deliberate sequence to minimize re-work.We’ve also made the skills extensible to any language. Skills themselves are language-agnostic, and reference language specific modules that cover idioms, commands, etc in a sibling directory. Out of the box, we include modules for nodejs, ruby, python, dart, swift, kotlin, go, rust, java, elixir, php, and .NET.
+The skills are designed to run in two passes: analysis and action. Analysis skills inform your agent of opportunities to improve codebase hygiene. Action skills apply changes, checking in with you first before taking big swings. On large changes, the skills trigger automatically and spawn sub-agents to parallelize work. We’ve also designed them to run in a deliberate sequence to minimize re-work.
+
+Skills themselves are language-agnostic, and reference language specific modules that cover idioms, commands, etc in a sibling directory. Out of the box, we include modules for nodejs, ruby, python, dart, swift, kotlin, go, rust, java, elixir, php, and .NET.
 
 As much as well love Anthropic’s skill architecture, we expect that skills like these won’t be the way engineers steer agents long-term. More structural, deterministic approaches will emerge to offer better task-level and philosophical guidance to agents. Until then, engineering teams are left to wrestle with the effects of context window sizes, context summarization, and lost-in-the-middle problems dirtying up their systems. These skills make agents clean up after themselves.
 
