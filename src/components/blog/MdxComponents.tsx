@@ -31,7 +31,7 @@ export const mdxComponents: MDXComponents = {
     <Typography
       level="h1"
       component="h1"
-      sx={{ ...headingSx, mt: 6, mb: 3, fontSize: "clamp(1.75rem, 4vw, 2.5rem)" }}
+      sx={{ ...headingSx, mt: 6, mb: 3, fontSize: "clamp(2rem, 4.5vw, 2.75rem)" }}
       {...props}
     />
   ),
@@ -39,7 +39,7 @@ export const mdxComponents: MDXComponents = {
     <Typography
       level="h2"
       component="h2"
-      sx={{ ...headingSx, mt: 5, mb: 2, fontSize: "clamp(1.5rem, 3vw, 2rem)" }}
+      sx={{ ...headingSx, mt: 6, mb: 2, fontSize: "clamp(1.65rem, 3.2vw, 2.15rem)" }}
       {...props}
     />
   ),
@@ -47,7 +47,7 @@ export const mdxComponents: MDXComponents = {
     <Typography
       level="h3"
       component="h3"
-      sx={{ ...headingSx, mt: 4, mb: 2, fontSize: "clamp(1.25rem, 2.4vw, 1.5rem)" }}
+      sx={{ ...headingSx, mt: 5, mb: 2, fontSize: "clamp(1.35rem, 2.6vw, 1.65rem)" }}
       {...props}
     />
   ),
@@ -64,9 +64,13 @@ export const mdxComponents: MDXComponents = {
       level="body-lg"
       component="p"
       sx={{
-        my: 2,
-        lineHeight: 1.7,
-        color: "rgba(255, 255, 255, 0.85)",
+        // Bigger and airier than `body-lg`'s defaults — the article
+        // column was narrowed in the post page to ~38rem to keep the
+        // characters-per-line count comfortable at this size.
+        fontSize: "clamp(1.125rem, 1.6vw, 1.25rem)",
+        lineHeight: 1.75,
+        my: 3,
+        color: "rgba(255, 255, 255, 0.88)",
       }}
       {...props}
     />
@@ -96,10 +100,11 @@ export const mdxComponents: MDXComponents = {
     <Box
       component="ul"
       sx={{
-        my: 2,
+        my: 3,
         pl: 3,
-        color: "rgba(255, 255, 255, 0.85)",
-        "& > li": { my: 1, lineHeight: 1.6 },
+        color: "rgba(255, 255, 255, 0.88)",
+        fontSize: "clamp(1.125rem, 1.6vw, 1.25rem)",
+        "& > li": { my: 1, lineHeight: 1.7 },
       }}
       {...props}
     />
@@ -108,10 +113,11 @@ export const mdxComponents: MDXComponents = {
     <Box
       component="ol"
       sx={{
-        my: 2,
+        my: 3,
         pl: 3,
-        color: "rgba(255, 255, 255, 0.85)",
-        "& > li": { my: 1, lineHeight: 1.6 },
+        color: "rgba(255, 255, 255, 0.88)",
+        fontSize: "clamp(1.125rem, 1.6vw, 1.25rem)",
+        "& > li": { my: 1, lineHeight: 1.7 },
       }}
       {...props}
     />
@@ -125,7 +131,10 @@ export const mdxComponents: MDXComponents = {
         borderLeft: "3px solid var(--mbp-palette-primary-400)",
         fontStyle: "italic",
         color: "rgba(196, 181, 253, 0.9)",
-        "& p": { color: "inherit" },
+        // Inherit the slightly larger article body size so quotes don't
+        // look diminutive next to the surrounding paragraphs.
+        "& p": { color: "inherit", fontSize: "inherit" },
+        fontSize: "clamp(1.125rem, 1.6vw, 1.25rem)",
       }}
       {...props}
     />

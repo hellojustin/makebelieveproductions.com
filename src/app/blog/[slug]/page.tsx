@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import rehypePrettyCode from "rehype-pretty-code";
 
 import Nav from "@/components/Nav";
+import DotCanvasShell from "@/components/DotCanvasShell";
 import PostHero from "@/components/blog/PostHero";
 import PostHeader from "@/components/blog/PostHeader";
 import { mdxComponents } from "@/components/blog/MdxComponents";
@@ -124,23 +125,41 @@ export default async function PostPage({ params }: PageProps) {
 
   return (
     <Box component="main" sx={{ position: "relative" }}>
+      {/* DotCanvasShell is a SIBLING of <PostHero/>, not a child of it.
+          The shell renders its canvas at z-index:1 (fixed); the hero
+          section sits at z-index:2 in the same stacking context (main).
+          Nesting the shell inside the hero would put the canvas above
+          the title because in-flow descendants stack below positioned
+          descendants with explicit z-index — see PostHero.tsx for the
+          full note. */}
+      <DotCanvasShell
+        heightSvh={50}
+        dataSource={{ kind: "single", url: post.dotsPath }}
+      />
+
       <Nav alwaysVisible />
 
       <PostHero
         title={post.title}
         date={post.date}
         description={post.description}
-        dotsUrl={post.dotsPath}
       />
 
       <Box className="contentStack">
         <Box
           component="article"
-          className="contentSection"
           sx={{
             position: "relative",
-            maxWidth: "44rem",
+            // ~38rem yields roughly 55–65 characters per line at the
+            // larger body font size used by MdxComponents — the classic
+            // readability sweet spot for long-form prose. We deliberately
+            // do NOT use the global `.contentSection` class here because
+            // its `max-width: 100rem` rule ties on specificity with
+            // Emotion's sx-generated class and wins by source order in
+            // production, blowing the reading column out to full width.
+            maxWidth: "38rem",
             mx: "auto",
+            px: { xs: 2, md: 3 },
             // Pull the article slightly up so the first paragraph sits
             // close to the hero's lower edge, but leave room for the
             // strip-fade transition.

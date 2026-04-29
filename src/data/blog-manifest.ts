@@ -31,7 +31,7 @@ export interface BlogManifest {
 }
 
 export const blogManifest: BlogManifest = {
-  generatedAt: "2026-04-28T22:09:03.321Z",
+  generatedAt: "2026-04-29T00:03:40.307Z",
   posts: [
   {
     "slug": "hello-world",

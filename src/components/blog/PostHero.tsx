@@ -1,37 +1,41 @@
 import { Box, Typography } from "@mui/joy";
-import DotCanvasShell from "@/components/DotCanvasShell";
 import { formatPostDate } from "@/lib/blog";
 
 interface PostHeroProps {
   title: string;
   date: string;
   description: string;
-  /** Path to the dot-data JSON for this post, e.g. /data/blog/<slug>.json */
-  dotsUrl: string;
 }
 
 /**
- * Hero block for a single blog post. Renders the animated dot field at
- * 50svh (half the homepage hero), overlayed with the post's title, date,
- * and dek. The canvas is fixed-position via `DotCanvasShell` and uses
- * the same scroll-driven strip-fade as the homepage — so as the reader
- * scrolls into the article body, the dots compress into a thin band at
- * the top of the viewport.
+ * Title overlay rendered above the page-wide animated dot field.
+ *
+ * Important: this component does NOT mount the `DotCanvasShell` itself.
+ * The shell is rendered at the page level (a sibling of this section)
+ * so the canvas and the hero text live in the same stacking context.
+ * If the canvas were nested inside this section, its `z-index: 1` would
+ * paint on top of the (z-index auto) title because in-flow descendants
+ * stack below positioned descendants with explicit z-index — see the
+ * commit that introduced this hero for the gory details.
+ *
+ * This section is sized to 50svh and the title is anchored to the
+ * bottom of it so it reads against the canvas's lower band, where the
+ * dots are typically darker (since dot size is luminance-driven and
+ * hero photos tend to put their subject up top).
  */
 export default function PostHero({
   title,
   date,
   description,
-  dotsUrl,
 }: PostHeroProps) {
   return (
     <Box
       component="section"
       sx={{
         position: "relative",
-        // The DotCanvasShell is fixed; this section just reserves 50svh
-        // of scroll room so the title sits over the canvas while the
-        // hero is in view.
+        // Reserves a half-viewport's worth of scroll room for the title
+        // overlay; the actual dot canvas is mounted at the page level
+        // (DotCanvasShell) and is fixed to the top of the viewport.
         height: "50svh",
         zIndex: 2,
         display: "flex",
@@ -43,21 +47,16 @@ export default function PostHero({
         pb: { xs: 4, md: 6 },
       }}
     >
-      <DotCanvasShell
-        heightSvh={50}
-        dataSource={{ kind: "single", url: dotsUrl }}
-      />
-
       <Box
         sx={{
           position: "relative",
-          maxWidth: "48rem",
-          // Tight stacked text shadow so the title reads cleanly against
-          // any dot color underneath, mirroring the HeroSection treatment
-          // but without the full chunky stroke (this is a per-post hero,
-          // not the brand wordmark).
-          textShadow:
-            "0 2px 24px rgba(10, 8, 26, 0.85), 0 0 6px rgba(10, 8, 26, 0.85)",
+          maxWidth: "60rem",
+          // Wide so the title can breathe at its featured size. Legibility
+          // against the dot field is handled per-element below using the
+          // `-webkit-text-stroke` + `paint-order: stroke fill` technique
+          // borrowed from HeroSection — the stroke is painted first in a
+          // near-black so the fill sits cleanly on top regardless of what
+          // dot color is underneath.
         }}
       >
         <Typography
@@ -66,11 +65,14 @@ export default function PostHero({
           level="body-sm"
           sx={{
             display: "block",
-            color: "rgba(196, 181, 253, 0.8)",
+            color: "rgba(196, 181, 253, 0.85)",
+            WebkitTextFillColor: "rgba(196, 181, 253, 0.85)",
+            WebkitTextStroke: "0.4rem #08051a",
+            paintOrder: "stroke fill",
             letterSpacing: "0.2em",
             textTransform: "uppercase",
-            fontSize: "0.75rem",
-            mb: 2,
+            fontSize: "0.8rem",
+            mb: { xs: 2, md: 3 },
           }}
         >
           {formatPostDate(date)}
@@ -80,12 +82,21 @@ export default function PostHero({
           level="h1"
           sx={{
             color: "common.white",
+            WebkitTextFillColor: "#fff",
+            // 0.8rem keeps the stroke proportional across the title's
+            // viewport-clamped range — heavier than the description's
+            // stroke, lighter than the homepage hero wordmark (which
+            // sits at 1rem on a much larger sans heading). Italic Fraunces
+            // has finer letterform detail, so we don't want to drown it.
+            WebkitTextStroke: "0.8rem #08051a",
+            paintOrder: "stroke fill",
             fontFamily: "var(--mbp-fontFamily-display)",
             fontStyle: "italic",
             fontWeight: 400,
-            lineHeight: 1.05,
-            fontSize: "clamp(2rem, 6vw, 4rem)",
-            mb: description ? 2 : 0,
+            lineHeight: 1,
+            fontSize: "clamp(2.75rem, 9vw, 6rem)",
+            letterSpacing: "-0.01em",
+            mb: description ? { xs: 3, md: 4 } : 0,
           }}
         >
           {title}
@@ -94,10 +105,13 @@ export default function PostHero({
           <Typography
             level="body-lg"
             sx={{
-              color: "rgba(196, 181, 253, 0.85)",
-              fontSize: "clamp(1rem, 2.2vw, 1.25rem)",
-              lineHeight: 1.4,
-              maxWidth: "36rem",
+              color: "rgba(196, 181, 253, 0.9)",
+              WebkitTextFillColor: "rgba(196, 181, 253, 0.9)",
+              WebkitTextStroke: "0.4rem #08051a",
+              paintOrder: "stroke fill",
+              fontSize: "clamp(1.05rem, 2vw, 1.35rem)",
+              lineHeight: 1.45,
+              maxWidth: "40rem",
               mx: "auto",
             }}
           >
