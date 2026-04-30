@@ -13,16 +13,18 @@ tags:
 draft: false
 ---
 
-Hi friends - today we’re open-sourcing the first of many Cursor/Claude skills that have allowed us to deliver high-craft engineering, at sustainable speed, with agents writing ~98% of the code.
+Hi friends - today we’re open-sourcing the first of many Cursor/Claude skills that have allowed
+us to deliver high-craft engineering, at sustainable speed, with agents writing ~98% of the code.
 
 **[Skillz-and-thrillz](https://github.com/make-believe-productions/skillz-and-thrillz)** — build fast, stay tidy.
 
-This first drop contains our codebase hygiene skills. Eighteen months of juggling two or more systems simultaneously in venture environments have taught us:
+This first drop contains our codebase hygiene skills. Eighteen months of juggling two or more
+systems simultaneously in venture environments have taught us:
 1. Products still rot from the inside; AI agents speed that up too.
 1. The same practices that help humans write great systems, help agents _even more_.
 
 That’s why we’re releasing our hygiene skills first. These skills help agents look after:
-- Adherence to 12-factor principles
+- Adherence to [12-factor principles](https://12factor.net/)
 - Dead code
 - Outdated dependencies
 - Documentation drift
@@ -32,11 +34,22 @@ That’s why we’re releasing our hygiene skills first. These skills help agent
 - Abandoned `TODO` comments
 - Untested code, of course
 
-The skills are designed to run in two passes: analysis and action. Analysis skills inform your agent of opportunities to improve codebase hygiene. Action skills apply changes, checking in with you first before taking big swings. On large changes, the skills trigger automatically and spawn sub-agents to parallelize work. We’ve also designed them to run in a deliberate sequence to minimize re-work.
+The skills are designed to run in two passes: analysis and action. Analysis skills inform your
+agent of opportunities to improve codebase hygiene. Action skills apply those changes, checking in
+with you first before taking big swings. When you make large changes, the skills trigger automatically,
+spawning sub-agents to parallelize work. When the whole suite runs, the sequence is deliberate, designed
+to minimize re-work.
 
-Skills themselves are language-agnostic, and reference language specific modules that cover idioms, commands, etc in a sibling directory. Out of the box, we include modules for nodejs, ruby, python, dart, swift, kotlin, go, rust, java, elixir, php, and .NET.
+These skills themselves are language-agnostic. They reference language-specific modules that cover idioms,
+commands, etc in a sibling directory. Out of the box, we include modules for nodejs, ruby, python,
+dart, swift, kotlin, go, rust, java, elixir, php, and .NET.
 
-As much as well love Anthropic’s skill architecture, we expect that skills like these won’t be the way engineers steer agents long-term. More structural, deterministic approaches will emerge to offer better task-level and philosophical guidance to agents. Until then, engineering teams are left to wrestle with the effects of context window sizes, context summarization, and lost-in-the-middle problems dirtying up their systems. These skills make agents clean up after themselves.
+As much as we love [Anthropic’s skill architecture](https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf),
+we expect skills won’t be the way engineers steer agents long-term. More structural,
+deterministic approaches will emerge to offer better task-level and philosophical guidance to agents.
+Until then, engineering teams are left to wrestle with the effects of [context window size](https://dev.to/rijultp/how-much-can-an-llm-read-at-once-meet-the-context-window-4062),
+[context summarization](https://arxiv.org/html/2310.10570v3), and [lost-in-the-middle](https://cs.stanford.edu/~nfliu/papers/lost-in-the-middle.arxiv2023.pdf)
+problems tracking dirt through their systems. These skills make agents clean up after themselves. :)
 
 Stay tuned for more!
 
